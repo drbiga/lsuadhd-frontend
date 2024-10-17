@@ -67,9 +67,11 @@ export enum Stage {
 
 class SessionExecutionService {
     private websocket: WebSocket | null;
+    private isUploading: boolean;
 
     public constructor() {
         this.websocket = null;
+        this.isUploading = false;
     }
 
     public async createStudent(studentName: string, studentPassword: string): Promise<Student> {
@@ -120,7 +122,15 @@ class SessionExecutionService {
             this.websocket = createWebSocket(studentName);
             this.websocket.addEventListener('message', (event) => {
                 const data = JSON.parse(event.data);
-                console.log(data);
+                // console.log(data);
+                try {
+                    if (!this.isUploading && data.stage === Stage.HOMEWORK && data.remaining_time < 10*60) {
+                        this.isUploading = true;
+                        axios.post('http://localhost:8001/tracking')
+                    }
+                } catch {
+
+                }
                 updateCallback({
                     stage: data.stage,
                     remainingTimeSeconds: data.remaining_time
