@@ -123,14 +123,7 @@ class SessionExecutionService {
             this.websocket.addEventListener('message', (event) => {
                 const data = JSON.parse(event.data);
                 // console.log(data);
-                try {
-                    if (!this.isUploading && data.stage === Stage.HOMEWORK && data.remaining_time < 10*60) {
-                        this.isUploading = true;
-                        axios.post('http://localhost:8001/tracking')
-                    }
-                } catch {
-
-                }
+                this.initiateTrackingUpload(data.stage, data.remaining_time);
                 updateCallback({
                     stage: data.stage,
                     remainingTimeSeconds: data.remaining_time
@@ -166,6 +159,10 @@ class SessionExecutionService {
         };
     }
 
+    private checkInitiateTrackingConditions(stage: Stage, remainingTimeSeconds: number): boolean {
+        return !this.isUploading && stage === Stage.HOMEWORK && remainingTimeSeconds < 10*60
+    }
+
     public setUpdateCallback(studentName: string, updateCallback: (sessionProgressData: SessionProgressData) => void) {
         if (this.websocket === null) {
             this.websocket = createWebSocket(studentName);
@@ -173,11 +170,23 @@ class SessionExecutionService {
         this.websocket.addEventListener('message', (event) => {
             const data = JSON.parse(event.data);
             console.log(data);
+            this.initiateTrackingUpload(data.stage, data.remaining_time);
             updateCallback({
                 stage: data.stage,
                 remainingTimeSeconds: data.remaining_time
             });
         });
+    }
+
+    private initiateTrackingUpload(stage: Stage, remainingTimeSeconds: number) {
+        try {
+            if (this.checkInitiateTrackingConditions(stage, remainingTimeSeconds)) {
+                this.isUploading = true;
+                axios.post('http://localhost:8001/tracking');
+            }
+        } catch {
+            console.log('Something went wrong while initiating the tracking database upload')
+        }
     }
 }
 
