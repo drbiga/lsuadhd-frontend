@@ -27,6 +27,8 @@ export type Session = {
     no_equipment?: boolean;
     stage: Stage;
     feedbacks: Feedback[];
+    readcomp_link?: string;
+    post_link?: string;
 }
 
 export type Feedback = {
