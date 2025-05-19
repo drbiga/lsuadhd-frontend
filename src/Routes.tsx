@@ -12,7 +12,8 @@ import SessionProgressManagementPage from "./pages/SessionProgress/Management";
 import Students from "./pages/Management/Students";
 
 export enum RouteNames {
-    BASENAME = '/lsuadhd-frontend',
+    // BASENAME = '/lsuadhd-frontend',
+    BASENAME = '',
     HOME = '/',
     LOGIN = '/login',
     SIGNUP = '/signup',

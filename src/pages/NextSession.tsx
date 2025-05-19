@@ -47,7 +47,8 @@ export default function NextSession() {
 
   const handleStartSession = useCallback(async () => {
     if (authState.session) {
-      await sessionExecutionService.startSessionForStudent(authState.session.user.username, handleSessionProgressDataUpdate);
+      const session = await sessionExecutionService.startSessionForStudent(authState.session.user.username, handleSessionProgressDataUpdate);
+      setNextSession(session);
       setSessionHasStarted(true);
     }
   }, [authState, nextSession]);
