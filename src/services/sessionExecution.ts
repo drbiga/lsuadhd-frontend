@@ -20,8 +20,6 @@ export type SessionAnalytics = {
 export type Session = {
     seqnum: number;
     start_link: string;
-    readcomp_link?: string;
-    post_link?: string;
     is_passthrough: boolean;
     has_feedback: boolean;
     no_equipment?: boolean;
