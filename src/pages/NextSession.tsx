@@ -127,37 +127,60 @@ export default function NextSession() {
     <PageContainer>
       <Sidebar />
       <div className="w-full">
-        <header className="w-full max-w-[84vw] flex justify-between px-4 fixed bg-neutral-800 opacity-30 transition-all duration-300 hover:opacity-100">
-          <PageTitle>Next Session</PageTitle>
+        {sessionHasStarted && sessionProgressData?.stage !== Stage.HOMEWORK && (
+          <header className="w-full max-w-[84vw] flex justify-between px-4 fixed bg-background opacity-30 transition-all duration-300 hover:opacity-100">
+            <PageTitle>Next Session</PageTitle>
 
-          <div className="ml-8 flex items-center justify-center gap-4">
-            <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
-            <SessionItemStage>{sessionProgressData?.stage}</SessionItemStage>
-            {sessionProgressData && (
-              <>
-                <SessionItemComment>
-                  Remaining time:{" "}
-                  {presentRemainingTime(
-                    sessionProgressData.remainingTimeSeconds
-                  )}
-                </SessionItemComment>
-                {sessionProgressData.stage === Stage.READCOMP &&
-                  sessionProgressData.remainingTimeSeconds <= 0 && (
-                    <Button
-                      onClick={() => {
-                        if (authState.session)
-                          sessionExecutionService.startHomeworkForStudent(
-                            authState.session?.user.username
-                          );
-                      }}
-                    >
-                      Proceed to homework
-                    </Button>
-                  )}
-              </>
-            )}
-          </div>
-        </header>
+            <div className="ml-8 flex items-center justify-center gap-4">
+              <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
+              <SessionItemStage>{sessionProgressData?.stage}</SessionItemStage>
+              {sessionProgressData && (
+                <>
+                  <SessionItemComment>
+                    Remaining time:{" "}
+                    {presentRemainingTime(
+                      sessionProgressData.remainingTimeSeconds
+                    )}
+                  </SessionItemComment>
+                  {sessionProgressData.stage === Stage.READCOMP &&
+                    sessionProgressData.remainingTimeSeconds <= 0 && (
+                      <Button
+                        onClick={() => {
+                          if (authState.session)
+                            sessionExecutionService.startHomeworkForStudent(
+                              authState.session?.user.username
+                            );
+                        }}
+                      >
+                        Proceed to homework
+                      </Button>
+                    )}
+                </>
+              )}
+            </div>
+          </header>
+        )}
+
+        {sessionHasStarted && sessionProgressData?.stage === Stage.HOMEWORK && (
+          <header className="w-full pl-16 pt-8 max-w-[84vw] flex justify-between px-4 fixed">
+            <PageTitle>Next Session</PageTitle>
+
+            <div className="ml-8 flex items-center justify-center gap-4">
+              <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
+              <SessionItemStage>{sessionProgressData?.stage}</SessionItemStage>
+              {sessionProgressData && (
+                <>
+                  <SessionItemComment>
+                    Remaining time:{" "}
+                    {presentRemainingTime(
+                      sessionProgressData.remainingTimeSeconds
+                    )}
+                  </SessionItemComment>
+                </>
+              )}
+            </div>
+          </header>
+        )}
 
         {sessionHasStarted && sessionProgressData && (
           <>
@@ -402,7 +425,8 @@ export default function NextSession() {
                 </div>
               </div>
             ) : (
-              <div>
+              <div className="pl-16 pt-8">
+                <h2 className="text-3xl mb-8">Congratulations!</h2>
                 <p>
                   It appears that you do not have any sessions left. Well done!
                   You've done them all!!!
