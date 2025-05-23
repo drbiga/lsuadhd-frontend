@@ -126,38 +126,40 @@ export default function NextSession() {
   return (
     <PageContainer>
       <Sidebar />
-      <PageMainContent>
-        <header className="flex justify-between pr-16">
-          <PageTitle>Next Session</PageTitle>
+      <div className="w-full">
+        {(!sessionHasStarted || (sessionHasStarted && nextSession?.stage === Stage.HOMEWORK)) && (
+          <header className="flex justify-between pr-16">
+            <PageTitle>Next Session</PageTitle>
 
-          <div className="ml-8 flex items-center justify-center gap-4">
-            <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
-            <SessionItemStage>{sessionProgressData?.stage}</SessionItemStage>
-            {sessionProgressData && (
-              <>
-                <SessionItemComment>
-                  Remaining time:{" "}
-                  {presentRemainingTime(
-                    sessionProgressData.remainingTimeSeconds
-                  )}
-                </SessionItemComment>
-                {sessionProgressData.stage === Stage.READCOMP &&
-                  sessionProgressData.remainingTimeSeconds <= 0 && (
-                    <Button
-                      onClick={() => {
-                        if (authState.session)
-                          sessionExecutionService.startHomeworkForStudent(
-                            authState.session?.user.username
-                          );
-                      }}
-                    >
-                      Proceed to homework
-                    </Button>
-                  )}
-              </>
-            )}
-          </div>
-        </header>
+            <div className="ml-8 flex items-center justify-center gap-4">
+              <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
+              <SessionItemStage>{sessionProgressData?.stage}</SessionItemStage>
+              {sessionProgressData && (
+                <>
+                  <SessionItemComment>
+                    Remaining time:{" "}
+                    {presentRemainingTime(
+                      sessionProgressData.remainingTimeSeconds
+                    )}
+                  </SessionItemComment>
+                  {sessionProgressData.stage === Stage.READCOMP &&
+                    sessionProgressData.remainingTimeSeconds <= 0 && (
+                      <Button
+                        onClick={() => {
+                          if (authState.session)
+                            sessionExecutionService.startHomeworkForStudent(
+                              authState.session?.user.username
+                            );
+                        }}
+                      >
+                        Proceed to homework
+                      </Button>
+                    )}
+                </>
+              )}
+            </div>
+          </header>
+        )}
 
         {sessionHasStarted && sessionProgressData && (
           <>
@@ -411,7 +413,7 @@ export default function NextSession() {
             )}
           </>
         )}
-      </PageMainContent>
+      </div>
     </PageContainer>
   );
 }
