@@ -130,9 +130,9 @@ export default function NextSession() {
   return (
     <PageContainer>
       <Sidebar />
-      <div className="w-full my-auto">
+      <div className="w-full h-full">
         {!sessionHasStarted && !completedPreSessionChecks && (
-          <div className="flex flex-col justify-center items-center gap-4">
+          <div className="h-full flex flex-col justify-center items-center gap-4">
             <h2 className="text-xl">Welcome</h2>
             <p className="">You are about to go through some pre-session checks. Please press begin</p>
             <PreSessionChecks completedCallback={() => setCompletedPreSessionChecks(true)} />
