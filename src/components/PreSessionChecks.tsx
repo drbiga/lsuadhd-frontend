@@ -182,57 +182,40 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
             )}
           </AlertDialogHeader>
 
+          {state.type === 'AUDIO_CUE' && (
+            <>
+              <Input
+                ref={audioCueAnswerRef}
+                value={state.answer}
+                onChange={(e) => dispatch({ type: 'SET_AUDIO_CUE', answer: e.target.value, chosenCue })}
+              />
+              {state.error && <p className="text-red-500 text-sm">{state.error}</p>}
+              <AudioCuePlayButton cue={chosenCue} />
+            </>
+          )}
+
           <AlertDialogFooter>
             {['WELCOME', 'VR_MODE_PASSTHROUGH'].includes(state.type) && (
               <Button variant={'outline'} onClick={() => dispatch({ type: 'NEXT' })}>Continue</Button>
             )}
-
-            {state.type === 'LOCAL_SERVER' && (
-              <>
-                <div className={cn("flex items-center gap-0", isPinging ? 'hidden' : '')}>
-                  {!localServerIsWorking && <div className="w-1 h-1 rounded-full bg-red-600"></div>}
-                  {localServerIsWorking && <div className="w-1 h-1 rounded-full bg-green-600"></div>}
-                  <Button onClick={() => pingLocalServer()}>Verify again</Button>
-                </div>
-                <div className={cn("flex items-center", isPinging ? '' : 'hidden')}>
-                  <div className="w-5 h-5 border-2 border-t-2 border-white border-t-blue-400 rounded-full animate-spin"></div>
-                </div>
-                <Button variant={"outline"} disabled={!localServerIsWorking} onClick={() => dispatch({ type: 'NEXT' })}>
-                  Continue
-                </Button>
-              </>
-            )}
-
             {state.type === 'AUDIO_CUE' && (
-              <div className="flex flex-col w-full gap-2">
-                <div className="w-[100%]">
-                  <Input
-                    ref={audioCueAnswerRef}
-                    value={state.answer}
-                    onChange={(e) => dispatch({ type: 'SET_AUDIO_CUE', answer: e.target.value, chosenCue })}
-                  />
-                  {state.error && <p className="text-red-500 text-sm">{state.error}</p>}
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <AudioCuePlayButton cue={chosenCue} />
-                  <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_CUE' })}>
-                    Continue
-                  </Button>
-                </div>
-              </div>
+              <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_CUE' })}>
+                Continue
+              </Button>
             )}
-
-            {state.type === 'CONFIRMATION' && (
-              <AlertDialogAction>
-                <Button variant={"outline"} onClick={() => {
-                  dispatch({ type: 'FINISH' })
-                  completedCallback();
-                }}>Close</Button>
-              </AlertDialogAction>
-            )}
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            {
+              state.type === 'CONFIRMATION' && (
+                <AlertDialogAction>
+                  <Button variant={"outline"} onClick={() => {
+                    dispatch({ type: 'FINISH' })
+                    completedCallback();
+                  }}>Close</Button>
+                </AlertDialogAction>
+              )
+            }
+          </AlertDialogFooter >
+        </AlertDialogContent >
+      </AlertDialog >
     </>
   );
 }

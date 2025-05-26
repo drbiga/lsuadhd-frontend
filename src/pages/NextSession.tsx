@@ -18,7 +18,6 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
-  AlertDialogTitle,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTrigger,
@@ -126,14 +125,14 @@ export default function NextSession() {
     })();
   }, [authState, setSessionProgressData]);
 
-  useEffect(() => {}, [sessionHasStarted]);
+  useEffect(() => { }, [sessionHasStarted]);
 
   return (
     <PageContainer>
       <Sidebar />
-      <div className="w-full h-full">
+      <div className="w-full my-auto">
         {!sessionHasStarted && !completedPreSessionChecks && (
-          <div className="h-full flex flex-col justify-center items-center gap-4">
+          <div className="flex flex-col justify-center items-center gap-4">
             <h2 className="text-xl">Welcome</h2>
             <p className="">You are about to go through some pre-session checks. Please press begin</p>
             <PreSessionChecks completedCallback={() => setCompletedPreSessionChecks(true)} />
@@ -192,9 +191,7 @@ export default function NextSession() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        VR Headset
-                      </AlertDialogTitle>
+                      <h2 className="text-lg">VR Headset</h2>
                       <p>
                         You were supposed to be wearing the VR headset
                         already. Are you?
@@ -206,8 +203,13 @@ export default function NextSession() {
                       <p>Please double check.</p>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogAction className="bg-primary" onClick={() => handleStartSession()}>
-                        Start!
+                      <AlertDialogAction>
+                        <Button
+                          className="bg-primary"
+                          onClick={() => handleStartSession()}
+                        >
+                          Start!
+                        </Button>
                       </AlertDialogAction>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                     </AlertDialogFooter>
