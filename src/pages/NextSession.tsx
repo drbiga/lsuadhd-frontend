@@ -1,5 +1,6 @@
 import { Button } from "@/components/Button";
 import { PageContainer, PageTitle } from "@/components/Page";
+import { PreSessionChecks } from "@/components/PreSessionChecks";
 import {
   SessionItemComment,
   SessionItemSeqnum,
@@ -26,7 +27,7 @@ import sessionExecutionService, {
   SessionProgressData,
   Stage,
 } from "@/services/sessionExecution";
-import { AlertDialogAction } from "@radix-ui/react-alert-dialog";
+import { AlertDialogAction, AlertDialogDescription, AlertDialogTitle } from "@radix-ui/react-alert-dialog";
 import { useCallback, useEffect, useState } from "react";
 
 enum HasNextSessionValue {
@@ -44,7 +45,10 @@ export default function NextSession() {
   const [sessionProgressData, setSessionProgressData] =
     useState<SessionProgressData | null>(null);
 
+  const [completedPreSessionChecks, setCompletedPreSessionChecks] = useState(false);
+
   // State recovery and initialization code below (right above the return statement).
+
 
   const { authState } = useAuth();
 
@@ -126,7 +130,101 @@ export default function NextSession() {
   return (
     <PageContainer>
       <Sidebar />
-      <div className="w-full">
+      <div className="w-full my-auto">
+        {!sessionHasStarted && !completedPreSessionChecks && (
+          <div className="flex flex-col justify-center items-center gap-4">
+            <h2 className="text-xl">Welcome</h2>
+            <p className="">You are about to go through some pre-session checks. Please press begin</p>
+            <PreSessionChecks completedCallback={() => setCompletedPreSessionChecks(true)} />
+          </div>
+        )}
+
+        {completedPreSessionChecks && !sessionHasStarted && hasNextSession && (
+          <div className="h-full w-full flex items-center justify-center">
+            <div className="flex flex-col gap-8 justify-center items-center translate-x-[-100px] p-16 border-[2px] border-slate-700 rounded-lg">
+              <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
+              {nextSession && nextSession.no_equipment && (
+                <>
+                  <SessionItemComment>
+                    <span className="font-bold text-slate-200 text-xl">
+                      Attention!
+                    </span>{" "}
+                    You are{" "}
+                    <span className="font-bold text-slate-200 text-xl">
+                      not supposed to use the headset
+                    </span>{" "}
+                    during this session.
+                  </SessionItemComment>
+                  <SessionItemComment>
+                    If you are currently wearing the headset, then
+                    please take it off to continue your session
+                    properly.
+                  </SessionItemComment>
+                  <SessionItemComment>
+                    Your sessions with the headset begin at session #3
+                  </SessionItemComment>
+                </>
+              )}
+              {nextSession && !nextSession.no_equipment && (
+                <>
+                  <SessionItemComment>
+                    {nextSession?.is_passthrough
+                      ? "This session is going to be passthrough"
+                      : "This session is going to be VR"}
+                  </SessionItemComment>
+                  <SessionItemComment>
+                    {nextSession?.has_feedback
+                      ? "You are going to receive some feedback this session"
+                      : "There will be no feedbacks for this session"}
+                  </SessionItemComment>
+                </>
+              )}
+
+              <SessionItemComment>
+                Are you ready to do this?
+              </SessionItemComment>
+
+              {nextSession && nextSession.seqnum > 2 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button>Start!</Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <h2 className="text-lg">VR Headset</h2>
+                      <p>
+                        You were supposed to be wearing the VR headset
+                        already. Are you?
+                      </p>
+                      <p>
+                        If not, it's possible you missed something on the
+                        instructions sheet.
+                      </p>
+                      <p>Please double check.</p>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogAction>
+                        <Button
+                          className="bg-primary"
+                          onClick={() => handleStartSession()}
+                        >
+                          Start!
+                        </Button>
+                      </AlertDialogAction>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              {nextSession && nextSession.seqnum <= 2 && (
+                <SessionStartButton onClick={() => handleStartSession()}>
+                  Start!
+                </SessionStartButton>
+              )}
+            </div>
+          </div>
+        )}
+
         {sessionHasStarted && sessionProgressData?.stage !== Stage.HOMEWORK && (
           <header className="w-full max-w-[84vw] flex justify-between px-4 fixed bg-background opacity-30 transition-all duration-300 hover:opacity-100">
             <PageTitle>Next Session</PageTitle>
@@ -337,103 +435,14 @@ export default function NextSession() {
           </>
         )}
 
-        {!sessionHasStarted && (
-          <>
-            {hasNextSession ? (
-              <div className="h-full w-full flex items-center justify-center">
-                <div className="flex flex-col gap-8 justify-center items-center translate-x-[-100px] p-16 border-[2px] border-slate-700 rounded-lg">
-                  <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
-                  {nextSession && (
-                    <>
-                      {nextSession.no_equipment === true ? (
-                        <>
-                          <SessionItemComment>
-                            <span className="font-bold text-slate-200 text-xl">
-                              Attention!
-                            </span>{" "}
-                            You are{" "}
-                            <span className="font-bold text-slate-200 text-xl">
-                              not supposed to use the headset
-                            </span>{" "}
-                            during this session.
-                          </SessionItemComment>
-                          <SessionItemComment>
-                            If you are currently wearing the headset, then
-                            please take it off to continue your session
-                            properly.
-                          </SessionItemComment>
-                          <SessionItemComment>
-                            Your sessions with the headset begin at session #3
-                          </SessionItemComment>
-                        </>
-                      ) : (
-                        <>
-                          <SessionItemComment>
-                            {nextSession?.is_passthrough
-                              ? "This session is going to be passthrough"
-                              : "This session is going to be VR"}
-                          </SessionItemComment>
-                          <SessionItemComment>
-                            {nextSession?.has_feedback
-                              ? "You are going to receive some feedback this session"
-                              : "There will be no feedbacks for this session"}
-                          </SessionItemComment>
-                        </>
-                      )}
-                    </>
-                  )}
-                  <SessionItemComment>
-                    Are you ready to do this?
-                  </SessionItemComment>
-                  {nextSession && nextSession.seqnum > 2 && (
-                    <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                        <Button>Start!</Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <h2 className="text-lg">VR Headset</h2>
-                          <p>
-                            You were supposed to be wearing the VR headset
-                            already. Are you?
-                          </p>
-                          <p>
-                            If not, it's possible you missed something on the
-                            instructions sheet.
-                          </p>
-                          <p>Please double check.</p>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogAction>
-                            <Button
-                              className="bg-primary"
-                              onClick={() => handleStartSession()}
-                            >
-                              Start!
-                            </Button>
-                          </AlertDialogAction>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                  )}
-                  {nextSession && nextSession.seqnum <= 2 && (
-                    <SessionStartButton onClick={() => handleStartSession()}>
-                      Start!
-                    </SessionStartButton>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <div className="pl-16 pt-8">
-                <h2 className="text-3xl mb-8">Congratulations!</h2>
-                <p>
-                  It appears that you do not have any sessions left. Well done!
-                  You've done them all!!!
-                </p>
-              </div>
-            )}
-          </>
+        {!sessionHasStarted && !hasNextSession && (
+          <div className="pl-16 pt-8">
+            <h2 className="text-3xl mb-8">Congratulations!</h2>
+            <p>
+              It appears that you do not have any sessions left. Well done!
+              You've done them all!!!
+            </p>
+          </div>
         )}
       </div>
     </PageContainer>
