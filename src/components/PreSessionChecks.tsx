@@ -3,7 +3,7 @@ import { AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, 
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { AlertDialogAction, AlertDialogDescription } from "@radix-ui/react-alert-dialog";
-import { CirclePlay, Divide } from "lucide-react";
+import { CirclePlay } from "lucide-react";
 import axios, { AxiosError } from "axios";
 import { useAuth } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
@@ -98,12 +98,10 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
           initializeLocalServer();
           setLocalServerIsWorking(true);
         } else if (e.code === 'ERR_NETWORK') {
-          console.log("Aqui")
           setLocalServerIsWorking(false);
         }
       }
       if (e.code === 'ECONNREFUSED') {
-        console.log("Aqui 2")
         setLocalServerIsWorking(false);
       }
       console.log(e)

@@ -15,6 +15,7 @@ import {
 import Sidebar from "@/components/Sidebar";
 import {
   AlertDialog,
+  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogFooter,
@@ -27,7 +28,6 @@ import sessionExecutionService, {
   SessionProgressData,
   Stage,
 } from "@/services/sessionExecution";
-import { AlertDialogAction, AlertDialogDescription, AlertDialogTitle } from "@radix-ui/react-alert-dialog";
 import { useCallback, useEffect, useState } from "react";
 
 enum HasNextSessionValue {
