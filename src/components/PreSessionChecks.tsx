@@ -201,7 +201,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
 
             {state.type === 'LOCAL_SERVER' && (
               <>
-                <div className={cn("flex items-center", isPinging ? 'hidden' : '')}>
+                <div className={cn("flex items-center gap-0", isPinging ? 'hidden' : '')}>
                   {!localServerIsWorking && <div className="w-1 h-1 rounded-full bg-red-600"></div>}
                   {localServerIsWorking && <div className="w-1 h-1 rounded-full bg-green-600"></div>}
                   <Button onClick={() => pingLocalServer()}>Verify again</Button>
