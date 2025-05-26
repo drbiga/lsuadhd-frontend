@@ -15,7 +15,7 @@ export type PreSessionChecksSteps =
 export type Action =
   | { type: 'NEXT' }
   | { type: 'SET_AUDIO_CUE'; answer: string; chosenCue: string }
-  | { type: 'VALIDATE_NAME' }
+  | { type: 'VALIDATE_CUE' }
   | { type: 'FINISH' };
 
 export function checksReducer(state: PreSessionChecksSteps, action: Action): PreSessionChecksSteps {
@@ -28,7 +28,7 @@ export function checksReducer(state: PreSessionChecksSteps, action: Action): Pre
       break;
     case 'AUDIO_CUE':
       if (action.type === 'SET_AUDIO_CUE') return { ...state, answer: action.answer, chosenCue: action.chosenCue };
-      if (action.type === 'VALIDATE_NAME') {
+      if (action.type === 'VALIDATE_CUE') {
         return state.answer === state.chosenCue
           ? { type: 'CONFIRMATION' }
           : { ...state, error: 'Invalid answer' };
@@ -71,7 +71,8 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
   const [state, dispatch] = useReducer(checksReducer, { type: 'WELCOME' });
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const audioCueAnswerRef = useRef(null);
-  const chosenCue = 'dog';
+  const availableCues = ['dog', 'ice cream', 'laboratory'];
+  const [chosenCue, _] = useState(() => availableCues[Math.floor(Math.random() * availableCues.length)]);
 
   return (
     <>
@@ -132,7 +133,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               <Button variant={'outline'} onClick={() => dispatch({ type: 'NEXT' })}>Continue</Button>
             )}
             {state.type === 'AUDIO_CUE' && (
-              <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_NAME' })}>
+              <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_CUE' })}>
                 Continue
               </Button>
             )}
