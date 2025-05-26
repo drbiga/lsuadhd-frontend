@@ -1,12 +1,16 @@
-import { useReducer, useRef, useState } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import { AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
 import { AlertDialogAction, AlertDialogDescription } from "@radix-ui/react-alert-dialog";
-import { CirclePlay } from "lucide-react";
+import { CirclePlay, Divide } from "lucide-react";
+import axios, { AxiosError } from "axios";
+import { useAuth } from "@/hooks/auth";
+import { cn } from "@/lib/utils";
 
 export type PreSessionChecksSteps =
   | { type: 'WELCOME' }
+  | { type: 'LOCAL_SERVER' }
   | { type: 'VR_MODE_PASSTHROUGH' }
   | { type: 'AUDIO_CUE'; answer: string; chosenCue: string; error?: string }
   | { type: 'CONFIRMATION' }
@@ -21,6 +25,9 @@ export type Action =
 export function checksReducer(state: PreSessionChecksSteps, action: Action): PreSessionChecksSteps {
   switch (state.type) {
     case 'WELCOME':
+      if (action.type === 'NEXT') return { type: 'LOCAL_SERVER' };
+      break;
+    case 'LOCAL_SERVER':
       if (action.type === 'NEXT') return { type: 'VR_MODE_PASSTHROUGH' };
       break;
     case 'VR_MODE_PASSTHROUGH':
@@ -42,7 +49,7 @@ export function checksReducer(state: PreSessionChecksSteps, action: Action): Pre
 }
 
 
-const AudioCueButton = ({ cue }: { cue: string }) => {
+const AudioCuePlayButton = ({ cue }: { cue: string }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const playSound = () => {
@@ -73,6 +80,40 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
   const audioCueAnswerRef = useRef(null);
   const availableCues = ['dog', 'ice cream', 'laboratory'];
   const [chosenCue, _] = useState(() => availableCues[Math.floor(Math.random() * availableCues.length)]);
+  const [localServerIsWorking, setLocalServerIsWorking] = useState(false);
+  const [isPinging, setIsPinging] = useState(false);
+
+  const { initializeLocalServer } = useAuth();
+
+  const pingLocalServer = useCallback(async () => {
+    setIsPinging(true)
+    try {
+      const response = await axios.get('http://localhost:8001/session');
+      if (response.data) {
+        setLocalServerIsWorking(true);
+      }
+    } catch (e: any) {
+      if (e instanceof AxiosError) {
+        if (e.response?.status === 412) {
+          initializeLocalServer();
+          setLocalServerIsWorking(true);
+        } else if (e.code === 'ERR_NETWORK') {
+          console.log("Aqui")
+          setLocalServerIsWorking(false);
+        }
+      }
+      if (e.code === 'ECONNREFUSED') {
+        console.log("Aqui 2")
+        setLocalServerIsWorking(false);
+      }
+      console.log(e)
+    }
+    setIsPinging(false);
+  }, [setLocalServerIsWorking]);
+
+  useEffect(() => {
+    pingLocalServer()
+  }, []);
 
   return (
     <>
@@ -90,6 +131,25 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               <>
                 <AlertDialogTitle>Welcome</AlertDialogTitle>
                 <AlertDialogDescription>You will perform a series of checks to make sure everything is ready and set up for a smooth session.</AlertDialogDescription>
+              </>
+            )}
+            {state.type === 'LOCAL_SERVER' && (
+              <>
+                <AlertDialogTitle>Supporting apps</AlertDialogTitle>
+                <AlertDialogDescription className="flex flex-col gap-8">
+                  <div className="flex gap-4">
+                    <p>
+                      The moment you double clicked on the "Open this first" shortcut on the desktop,
+                      you were supposed to see a command prompt, which looks like this.
+                    </p>
+                    <img width={"50%"} src="./cmd.jpg" alt="Command prompt image" />
+                  </div>
+                  <p>
+                    It is an intermediary app that launches and runs on the background to take care of any and all communications between the laptop, the browser, and our servers
+                  </p>
+                  {localServerIsWorking && (<p className="flex items-center gap-1"><p className="w-1 h-1 rounded-full bg-green-600"></p><p>It appears to be online</p></p>)}
+                  {!localServerIsWorking && (<p className="flex items-center gap-1"><p className="w-1 h-1 rounded-full bg-red-600"></p><p>It appears to be online</p></p>)}
+                </AlertDialogDescription>
               </>
             )}
             {state.type === 'VR_MODE_PASSTHROUGH' && (
@@ -116,27 +176,46 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
             )}
           </AlertDialogHeader>
 
-          {state.type === 'AUDIO_CUE' && (
-            <>
-              <Input
-                ref={audioCueAnswerRef}
-                value={state.answer}
-                onChange={(e) => dispatch({ type: 'SET_AUDIO_CUE', answer: e.target.value, chosenCue })}
-              />
-              {state.error && <p className="text-red-500 text-sm">{state.error}</p>}
-              <AudioCueButton cue={chosenCue} />
-            </>
-          )}
-
           <AlertDialogFooter>
             {['WELCOME', 'VR_MODE_PASSTHROUGH'].includes(state.type) && (
               <Button variant={'outline'} onClick={() => dispatch({ type: 'NEXT' })}>Continue</Button>
             )}
-            {state.type === 'AUDIO_CUE' && (
-              <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_CUE' })}>
-                Continue
-              </Button>
+
+            {state.type === 'LOCAL_SERVER' && (
+              <>
+                <div className={cn("flex items-center", isPinging ? 'hidden' : '')}>
+                  {!localServerIsWorking && <div className="w-1 h-1 rounded-full bg-red-600"></div>}
+                  {localServerIsWorking && <div className="w-1 h-1 rounded-full bg-green-600"></div>}
+                  <Button onClick={() => pingLocalServer()}>Verify again</Button>
+                </div>
+                <div className={cn("flex items-center", isPinging ? '' : 'hidden')}>
+                  <div className="w-5 h-5 border-2 border-t-2 border-white border-t-blue-400 rounded-full animate-spin"></div>
+                </div>
+                <Button variant={"outline"} disabled={!localServerIsWorking} onClick={() => dispatch({ type: 'NEXT' })}>
+                  Continue
+                </Button>
+              </>
             )}
+
+            {state.type === 'AUDIO_CUE' && (
+              <div className="flex flex-col w-full gap-2">
+                <div className="w-[100%]">
+                  <Input
+                    ref={audioCueAnswerRef}
+                    value={state.answer}
+                    onChange={(e) => dispatch({ type: 'SET_AUDIO_CUE', answer: e.target.value, chosenCue })}
+                  />
+                  {state.error && <p className="text-red-500 text-sm">{state.error}</p>}
+                </div>
+                <div className="flex gap-2 justify-end">
+                  <AudioCuePlayButton cue={chosenCue} />
+                  <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_CUE' })}>
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            )}
+
             {state.type === 'CONFIRMATION' && (
               <AlertDialogAction>
                 <Button variant={"outline"} onClick={() => {

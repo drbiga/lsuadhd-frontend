@@ -24,6 +24,7 @@ interface IAuthContext {
     login(credentials: LoginCredentials): Promise<ISession | null>;
     logout(): void;
     // refreshUser(): void;
+    initializeLocalServer(): void;
 }
 
 interface IAuthState {
@@ -148,7 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
     return (
-        <AuthContext.Provider value={{ authState, login, logout }}>
+        <AuthContext.Provider value={{ authState, login, logout, initializeLocalServer }}>
             {children}
         </AuthContext.Provider>
     );
