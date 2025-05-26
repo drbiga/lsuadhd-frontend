@@ -147,8 +147,16 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                   <p>
                     It is an intermediary app that launches and runs on the background to take care of any and all communications between the laptop, the browser, and our servers
                   </p>
-                  {localServerIsWorking && (<p className="flex items-center gap-1"><p className="w-1 h-1 rounded-full bg-green-600"></p><p>It appears to be online</p></p>)}
-                  {!localServerIsWorking && (<p className="flex items-center gap-1"><p className="w-1 h-1 rounded-full bg-red-600"></p><p>It appears to be online</p></p>)}
+                  {localServerIsWorking && (<p className="flex items-center gap-1"><p className="w-1 h-1 rounded-full bg-green-600"></p><p>The local server appears to be online</p></p>)}
+                  {!localServerIsWorking && (
+                    <>
+                      <p className="flex items-center gap-1">
+                        <p className="w-1 h-1 rounded-full bg-red-600"></p>
+                        <p>The local server appears to be offline</p>
+                      </p>
+                      <p>If you cannot resolve this, please contact Matheus by email mcost16@lsu.edu</p>
+                    </>
+                  )}
                 </AlertDialogDescription>
               </>
             )}
@@ -183,7 +191,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
 
             {state.type === 'LOCAL_SERVER' && (
               <>
-                <div className={cn("flex items-center", isPinging ? 'hidden' : '')}>
+                <div className={cn("flex items-center gap-0", isPinging ? 'hidden' : '')}>
                   {!localServerIsWorking && <div className="w-1 h-1 rounded-full bg-red-600"></div>}
                   {localServerIsWorking && <div className="w-1 h-1 rounded-full bg-green-600"></div>}
                   <Button onClick={() => pingLocalServer()}>Verify again</Button>
