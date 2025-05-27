@@ -121,7 +121,7 @@ export default function NextSession() {
     })();
   }, [authState, setSessionProgressData]);
 
-  useEffect(() => { }, [sessionHasStarted]);
+  useEffect(() => {}, [sessionHasStarted]);
 
   return (
     <PageContainer>
@@ -440,8 +440,10 @@ export default function NextSession() {
   );
 }
 
-function presentRemainingTime(remainingTimeSeconds: number | null): string {
-  if (remainingTimeSeconds !== null) {
+function presentRemainingTime(
+  remainingTimeSeconds: number | null | undefined
+): string {
+  if (remainingTimeSeconds != null) {
     return `${presentRemainingTimeMinutes(
       remainingTimeSeconds
     )}:${presentRemainingTimeSeconds(remainingTimeSeconds)}`;
