@@ -57,7 +57,7 @@ export default function Sidebar() {
             h-full bg-slate-700
             flex flex-col items-center justify-between py-8
             transition-all duration-100
-            ${collapsed ? "w-[3vw] min-w-[75px]" : "w-[15vw] min-w-[250px]"}
+            ${collapsed ? "w-[5vw]" : "w-[20vw]"}
         `}>
             <ul className="flex flex-col justify-around gap-4 mt-16">
                 {
