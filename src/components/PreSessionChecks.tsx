@@ -190,7 +190,6 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                 onChange={(e) => dispatch({ type: 'SET_AUDIO_CUE', answer: e.target.value, chosenCue })}
               />
               {state.error && <p className="text-red-500 text-sm">{state.error}</p>}
-              <AudioCuePlayButton cue={chosenCue} />
             </>
           )}
 
@@ -216,21 +215,11 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
             )}
 
             {state.type === 'AUDIO_CUE' && (
-              <div className="flex flex-col w-full gap-2">
-                <div className="w-[100%]">
-                  <Input
-                    ref={audioCueAnswerRef}
-                    value={state.answer}
-                    onChange={(e) => dispatch({ type: 'SET_AUDIO_CUE', answer: e.target.value, chosenCue })}
-                  />
-                  {state.error && <p className="text-red-500 text-sm">{state.error}</p>}
-                </div>
-                <div className="flex gap-2 justify-end">
-                  <AudioCuePlayButton cue={chosenCue} />
-                  <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_CUE' })}>
-                    Continue
-                  </Button>
-                </div>
+              <div className="flex w-full gap-2 justify-end">
+                <AudioCuePlayButton cue={chosenCue} />
+                <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_CUE' })}>
+                  Continue
+                </Button>
               </div>
             )}
 
