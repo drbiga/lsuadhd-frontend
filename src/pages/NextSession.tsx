@@ -18,6 +18,7 @@ import {
   AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
+  AlertDialogTitle,
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTrigger,
@@ -191,7 +192,9 @@ export default function NextSession() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <h2 className="text-lg">VR Headset</h2>
+                      <AlertDialogTitle>
+                        VR Headset
+                      </AlertDialogTitle>
                       <p>
                         You were supposed to be wearing the VR headset
                         already. Are you?
@@ -203,13 +206,8 @@ export default function NextSession() {
                       <p>Please double check.</p>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogAction>
-                        <Button
-                          className="bg-primary"
-                          onClick={() => handleStartSession()}
-                        >
-                          Start!
-                        </Button>
+                      <AlertDialogAction className="bg-primary" onClick={() => handleStartSession()}>
+                        Start!
                       </AlertDialogAction>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                     </AlertDialogFooter>
@@ -226,8 +224,8 @@ export default function NextSession() {
         )}
 
         {sessionHasStarted && sessionProgressData?.stage !== Stage.HOMEWORK && (
-          <header className="w-full max-w-[84vw] flex justify-between px-4 fixed bg-background opacity-30 transition-all duration-300 hover:opacity-100">
-            <PageTitle>Next Session</PageTitle>
+          <header className="w-full flex gap-8 fixed bg-background opacity-30 transition-all duration-300 hover:opacity-100">
+            {/* <PageTitle>Next Session</PageTitle> */}
 
             <div className="ml-8 flex items-center justify-center gap-4">
               <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
