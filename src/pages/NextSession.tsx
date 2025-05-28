@@ -12,7 +12,7 @@ import {
   WalkthroughInstructionsDescription,
   WalkthroughInstructionsTitle,
 } from "@/components/sessionExecution/WalkthroughSection";
-import Sidebar from "@/components/Sidebar";
+import Sidebar, { SidebarHandle } from "@/components/Sidebar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -29,7 +29,7 @@ import sessionExecutionService, {
   SessionProgressData,
   Stage,
 } from "@/services/sessionExecution";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 enum HasNextSessionValue {
   LOADING = -1,
@@ -52,6 +52,8 @@ export default function NextSession() {
 
 
   const { authState } = useAuth();
+
+  const sidebarRef = useRef<SidebarHandle>(null);
 
   const getNextSession = useCallback(async () => {
     if (authState.session) {
@@ -88,6 +90,7 @@ export default function NextSession() {
         );
       setNextSession(startedSession);
       setSessionHasStarted(true);
+      sidebarRef.current?.autoCollapse();
     }
   }, [authState, nextSession]);
 
@@ -130,7 +133,7 @@ export default function NextSession() {
 
   return (
     <PageContainer>
-      <Sidebar />
+      <Sidebar ref={sidebarRef} />
       <div className="w-full h-full">
         {!sessionHasStarted && !completedPreSessionChecks && (
           <div className="h-full flex flex-col justify-center items-center gap-4">
