@@ -1,5 +1,5 @@
 import { ChevronLeft, ChevronRight, Group, LayoutGrid, Milestone, Target, Users } from "lucide-react";
-import { forwardRef, ReactNode, SetStateAction, useCallback, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, ReactNode, useEffect, useImperativeHandle, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { DarkModeButton } from "./DarkModeButton";
 import { Role, useAuth } from "@/hooks/auth";
@@ -33,7 +33,7 @@ export type SidebarHandle = {
     autoCollapse(): void;
 }
 
-const Sidebar = forwardRef<SidebarHandle>((props, ref) => {
+const Sidebar = forwardRef<SidebarHandle>((_, ref) => {
     const [allowedContexts, setAllowedContexts] = useState<string[]>([]);
     const { pathname, state } = useLocation();
 
