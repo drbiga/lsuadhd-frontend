@@ -12,17 +12,19 @@ export type PreSessionChecksSteps =
   | { type: 'WELCOME' }
   | { type: 'LOCAL_SERVER' }
   | { type: 'VR_MODE_PASSTHROUGH' }
-  | { type: 'AUDIO_CUE'; answer: string; chosenCue: string; error?: string }
+  | { type: 'AUDIO_CUE'; answer: string, cue: string; error?: string }
   | { type: 'CONFIRMATION' }
   | { type: 'DONE' };
 
 export type Action =
   | { type: 'NEXT' }
-  | { type: 'SET_AUDIO_CUE'; answer: string; chosenCue: string }
+  | { type: 'SET_AUDIO_CUE'; answer: string }
   | { type: 'VALIDATE_CUE' }
   | { type: 'FINISH' };
 
 export function checksReducer(state: PreSessionChecksSteps, action: Action): PreSessionChecksSteps {
+  const availableCues = ['dog', 'ice cream', 'laboratory'];
+  const chosenCue = availableCues[Math.floor(Math.random() * availableCues.length)];
   switch (state.type) {
     case 'WELCOME':
       if (action.type === 'NEXT') return { type: 'LOCAL_SERVER' };
@@ -31,12 +33,14 @@ export function checksReducer(state: PreSessionChecksSteps, action: Action): Pre
       if (action.type === 'NEXT') return { type: 'VR_MODE_PASSTHROUGH' };
       break;
     case 'VR_MODE_PASSTHROUGH':
-      if (action.type === 'NEXT') return { type: 'AUDIO_CUE', answer: '', chosenCue: '' };
+      if (action.type === 'NEXT') return { type: 'AUDIO_CUE', answer: '', cue: chosenCue };
       break;
     case 'AUDIO_CUE':
-      if (action.type === 'SET_AUDIO_CUE') return { ...state, answer: action.answer, chosenCue: action.chosenCue };
+      if (action.type === 'SET_AUDIO_CUE') return { ...state, answer: action.answer };
       if (action.type === 'VALIDATE_CUE') {
-        return state.answer === state.chosenCue
+        console.log(state)
+        console.log(action)
+        return state.answer === state.cue
           ? { type: 'CONFIRMATION' }
           : { ...state, error: 'Invalid answer' };
       }
@@ -78,8 +82,6 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
   const [state, dispatch] = useReducer(checksReducer, { type: 'WELCOME' });
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const audioCueAnswerRef = useRef(null);
-  const availableCues = ['dog', 'ice cream', 'laboratory'];
-  const [chosenCue, _] = useState(() => availableCues[Math.floor(Math.random() * availableCues.length)]);
   const [localServerIsWorking, setLocalServerIsWorking] = useState(false);
   const [isPinging, setIsPinging] = useState(false);
 
@@ -104,7 +106,6 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
       if (e.code === 'ECONNREFUSED') {
         setLocalServerIsWorking(false);
       }
-      console.log(e)
     }
     setIsPinging(false);
   }, [setLocalServerIsWorking]);
@@ -187,7 +188,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               <Input
                 ref={audioCueAnswerRef}
                 value={state.answer}
-                onChange={(e) => dispatch({ type: 'SET_AUDIO_CUE', answer: e.target.value, chosenCue })}
+                onChange={(e) => dispatch({ type: 'SET_AUDIO_CUE', answer: e.target.value })}
               />
               {state.error && <p className="text-red-500 text-sm">{state.error}</p>}
             </>
@@ -216,7 +217,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
 
             {state.type === 'AUDIO_CUE' && (
               <div className="flex w-full gap-2 justify-end">
-                <AudioCuePlayButton cue={chosenCue} />
+                <AudioCuePlayButton cue={state.cue} />
                 <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_CUE' })}>
                   Continue
                 </Button>
