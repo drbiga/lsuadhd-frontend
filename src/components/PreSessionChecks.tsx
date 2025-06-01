@@ -1,57 +1,86 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
-import { AlertDialog, AlertDialogContent, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "./ui/alert-dialog";
+import {
+  AlertDialog,
+  AlertDialogContent,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "./ui/alert-dialog";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
-import { AlertDialogAction, AlertDialogDescription } from "@radix-ui/react-alert-dialog";
+import {
+  AlertDialogAction,
+  AlertDialogDescription,
+} from "@radix-ui/react-alert-dialog";
 import { CirclePlay } from "lucide-react";
 import axios, { AxiosError } from "axios";
 import { useAuth } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
 
 export type PreSessionChecksSteps =
-  | { type: 'WELCOME' }
-  | { type: 'LOCAL_SERVER' }
-  | { type: 'VR_MODE_PASSTHROUGH' }
-  | { type: 'AUDIO_CUE'; answer: string, cue: string; error?: string }
-  | { type: 'CONFIRMATION' }
-  | { type: 'DONE' };
+  | { type: "WELCOME" }
+  | { type: "LOCAL_SERVER" }
+  | { type: "VR_MODE_PASSTHROUGH" }
+  | { type: "AUDIO_CUE"; answer: string; cue: string; error?: string }
+  | { type: "CONFIRMATION" }
+  | { type: "DONE" };
 
 export type Action =
-  | { type: 'NEXT' }
-  | { type: 'SET_AUDIO_CUE'; answer: string }
-  | { type: 'VALIDATE_CUE' }
-  | { type: 'FINISH' };
+  | { type: "NEXT" }
+  | { type: "SET_AUDIO_CUE"; answer: string }
+  | { type: "VALIDATE_CUE" }
+  | { type: "FINISH" }
+  | { type: "CHANGE_CUE" };
 
-export function checksReducer(state: PreSessionChecksSteps, action: Action): PreSessionChecksSteps {
-  const availableCues = ['dog', 'ice cream', 'laboratory'];
-  const chosenCue = availableCues[Math.floor(Math.random() * availableCues.length)];
+export function checksReducer(
+  state: PreSessionChecksSteps,
+  action: Action
+): PreSessionChecksSteps {
+  const availableCues = ["dog", "ice cream", "laboratory"];
+
+  function getNextCue(currentCue: string) {
+    const currentIndex = availableCues.indexOf(currentCue);
+    const nextIndex = (currentIndex + 1) % availableCues.length;
+    return availableCues[nextIndex];
+  }
+
   switch (state.type) {
-    case 'WELCOME':
-      if (action.type === 'NEXT') return { type: 'LOCAL_SERVER' };
+    case "WELCOME":
+      if (action.type === "NEXT") return { type: "LOCAL_SERVER" };
       break;
-    case 'LOCAL_SERVER':
-      if (action.type === 'NEXT') return { type: 'VR_MODE_PASSTHROUGH' };
+    case "LOCAL_SERVER":
+      if (action.type === "NEXT") return { type: "VR_MODE_PASSTHROUGH" };
       break;
-    case 'VR_MODE_PASSTHROUGH':
-      if (action.type === 'NEXT') return { type: 'AUDIO_CUE', answer: '', cue: chosenCue };
-      break;
-    case 'AUDIO_CUE':
-      if (action.type === 'SET_AUDIO_CUE') return { ...state, answer: action.answer };
-      if (action.type === 'VALIDATE_CUE') {
-        console.log(state)
-        console.log(action)
-        return state.answer === state.cue
-          ? { type: 'CONFIRMATION' }
-          : { ...state, error: 'Invalid answer' };
+    case "VR_MODE_PASSTHROUGH":
+      if (action.type === "NEXT") {
+        const firstCue =
+          availableCues[Math.floor(Math.random() * availableCues.length)];
+        return { type: "AUDIO_CUE", answer: "", cue: firstCue };
       }
       break;
-    case 'CONFIRMATION':
-      if (action.type === 'FINISH') return { type: 'DONE' };
+    case "AUDIO_CUE":
+      if (action.type === "SET_AUDIO_CUE")
+        return { ...state, answer: action.answer };
+      if (action.type === "VALIDATE_CUE") {
+        return state.answer === state.cue
+          ? { type: "CONFIRMATION" }
+          : { ...state, error: "Invalid answer" };
+      }
+      if (action.type === "CHANGE_CUE") {
+        return {
+          ...state,
+          cue: getNextCue(state.cue),
+          answer: "",
+          error: undefined,
+        };
+      }
+      break;
+    case "CONFIRMATION":
+      if (action.type === "FINISH") return { type: "DONE" };
       break;
   }
   return state;
 }
-
 
 const AudioCuePlayButton = ({ cue }: { cue: string }) => {
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -73,13 +102,12 @@ const AudioCuePlayButton = ({ cue }: { cue: string }) => {
   );
 };
 
-
 export type PreSessionChecksProps = {
   completedCallback: () => void;
-}
+};
 
 export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
-  const [state, dispatch] = useReducer(checksReducer, { type: 'WELCOME' });
+  const [state, dispatch] = useReducer(checksReducer, { type: "WELCOME" });
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const audioCueAnswerRef = useRef(null);
   const [localServerIsWorking, setLocalServerIsWorking] = useState(false);
@@ -88,9 +116,9 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
   const { initializeLocalServer } = useAuth();
 
   const pingLocalServer = useCallback(async () => {
-    setIsPinging(true)
+    setIsPinging(true);
     try {
-      const response = await axios.get('http://localhost:8001/session');
+      const response = await axios.get("http://localhost:8001/session");
       if (response.data) {
         setLocalServerIsWorking(true);
       }
@@ -99,11 +127,11 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
         if (e.response?.status === 412) {
           initializeLocalServer();
           setLocalServerIsWorking(true);
-        } else if (e.code === 'ERR_NETWORK') {
+        } else if (e.code === "ERR_NETWORK") {
           setLocalServerIsWorking(false);
         }
       }
-      if (e.code === 'ECONNREFUSED') {
+      if (e.code === "ECONNREFUSED") {
         setLocalServerIsWorking(false);
       }
     }
@@ -111,125 +139,196 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
   }, [setLocalServerIsWorking]);
 
   useEffect(() => {
-    pingLocalServer()
+    pingLocalServer();
   }, []);
 
   return (
     <>
-      <Button className="bg-neutral-200 text-neutral-800" onClick={() => setDialogIsOpen(true)}>Begin</Button>
-      <AlertDialog open={dialogIsOpen} onOpenChange={v => {
-        setDialogIsOpen(v);
-        if (!v) {
-          dispatch({ type: 'FINISH' })
-          completedCallback();
-        }
-      }}>
+      <Button
+        className="bg-neutral-200 text-neutral-800"
+        onClick={() => setDialogIsOpen(true)}
+      >
+        Begin
+      </Button>
+      <AlertDialog
+        open={dialogIsOpen}
+        onOpenChange={(v) => {
+          setDialogIsOpen(v);
+          if (!v) {
+            dispatch({ type: "FINISH" });
+            completedCallback();
+          }
+        }}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            {state.type === 'WELCOME' && (
+            {state.type === "WELCOME" && (
               <>
                 <AlertDialogTitle>Welcome</AlertDialogTitle>
-                <AlertDialogDescription>You will perform a series of checks to make sure everything is ready and set up for a smooth session.</AlertDialogDescription>
+                <AlertDialogDescription>
+                  You will perform a series of checks to make sure everything is
+                  ready and set up for a smooth session.
+                </AlertDialogDescription>
               </>
             )}
-            {state.type === 'LOCAL_SERVER' && (
+            {state.type === "LOCAL_SERVER" && (
               <>
                 <AlertDialogTitle>Supporting apps</AlertDialogTitle>
                 <AlertDialogDescription className="flex flex-col gap-8">
                   <div className="flex gap-4">
                     <p>
-                      The moment you double clicked on the "Open this first" shortcut on the desktop,
-                      you were supposed to see a command prompt, which looks like this.
+                      The moment you double clicked on the "Open this first"
+                      shortcut on the desktop, you were supposed to see a
+                      command prompt, which looks like this.
                     </p>
-                    <img width={"50%"} src="./cmd.jpg" alt="Command prompt image" />
+                    <img
+                      width={"50%"}
+                      src="./cmd.jpg"
+                      alt="Command prompt image"
+                    />
                   </div>
                   <p>
-                    It is an intermediary app that launches and runs on the background to take care of any and all communications between the laptop, the browser, and our servers
+                    It is an intermediary app that launches and runs on the
+                    background to take care of any and all communications
+                    between the laptop, the browser, and our servers
                   </p>
-                  {localServerIsWorking && (<p className="flex items-center gap-1"><p className="w-1 h-1 rounded-full bg-green-600"></p><p>The local server appears to be online</p></p>)}
+                  {localServerIsWorking && (
+                    <p className="flex items-center gap-1">
+                      <p className="w-1 h-1 rounded-full bg-green-600"></p>
+                      <p>The local server appears to be online</p>
+                    </p>
+                  )}
                   {!localServerIsWorking && (
                     <>
                       <p className="flex items-center gap-1">
                         <p className="w-1 h-1 rounded-full bg-red-600"></p>
                         <p>The local server appears to be offline</p>
                       </p>
-                      <p>If you cannot resolve this, please contact Matheus by email mcost16@lsu.edu</p>
+                      <p>
+                        If you cannot resolve this, please contact Matheus by
+                        email mcost16@lsu.edu
+                      </p>
                     </>
                   )}
                 </AlertDialogDescription>
               </>
             )}
-            {state.type === 'VR_MODE_PASSTHROUGH' && (
+            {state.type === "VR_MODE_PASSTHROUGH" && (
               <>
                 <AlertDialogTitle>Setting VR mode</AlertDialogTitle>
                 <AlertDialogDescription>
-                  On the Meta Workrooms app on the headset, make sure that the VR mode is set to passthrough
-                  and that you can see your surroundings. If you see a virtual environment, please set to
+                  On the Meta Workrooms app on the headset, make sure that the
+                  VR mode is set to passthrough and that you can see your
+                  surroundings. If you see a virtual environment, please set to
                   passthrough before continuing.
                 </AlertDialogDescription>
               </>
             )}
-            {state.type === 'AUDIO_CUE' && (
+            {state.type === "AUDIO_CUE" && (
               <>
                 <AlertDialogTitle>Please enter the audio cue</AlertDialogTitle>
-                <AlertDialogDescription>Try to increase the volume to a comfortable level</AlertDialogDescription>
+                <AlertDialogDescription>
+                  Try to increase the volume to a comfortable level
+                </AlertDialogDescription>
               </>
             )}
-            {state.type === 'CONFIRMATION' && (
+            {state.type === "CONFIRMATION" && (
               <>
                 <AlertDialogTitle>Success!</AlertDialogTitle>
-                <AlertDialogDescription>You have finished all pre-session checks</AlertDialogDescription>
+                <AlertDialogDescription>
+                  You have finished all pre-session checks
+                </AlertDialogDescription>
               </>
             )}
           </AlertDialogHeader>
 
-          {state.type === 'AUDIO_CUE' && (
+          {state.type === "AUDIO_CUE" && (
             <>
               <Input
                 ref={audioCueAnswerRef}
                 value={state.answer}
-                onChange={(e) => dispatch({ type: 'SET_AUDIO_CUE', answer: e.target.value })}
+                onChange={(e) =>
+                  dispatch({ type: "SET_AUDIO_CUE", answer: e.target.value })
+                }
               />
-              {state.error && <p className="text-red-500 text-sm">{state.error}</p>}
+              {state.error && (
+                <p className="text-red-500 text-sm">{state.error}</p>
+              )}
             </>
           )}
 
           <AlertDialogFooter>
-            {['WELCOME', 'VR_MODE_PASSTHROUGH'].includes(state.type) && (
-              <Button variant={'outline'} onClick={() => dispatch({ type: 'NEXT' })}>Continue</Button>
+            {["WELCOME", "VR_MODE_PASSTHROUGH"].includes(state.type) && (
+              <Button
+                variant={"outline"}
+                onClick={() => dispatch({ type: "NEXT" })}
+              >
+                Continue
+              </Button>
             )}
 
-            {state.type === 'LOCAL_SERVER' && (
+            {state.type === "LOCAL_SERVER" && (
               <>
-                <div className={cn("flex items-center gap-0", isPinging ? 'hidden' : '')}>
-                  {!localServerIsWorking && <div className="w-1 h-1 rounded-full bg-red-600"></div>}
-                  {localServerIsWorking && <div className="w-1 h-1 rounded-full bg-green-600"></div>}
-                  <Button onClick={() => pingLocalServer()}>Verify again</Button>
+                <div
+                  className={cn(
+                    "flex items-center gap-0",
+                    isPinging ? "hidden" : ""
+                  )}
+                >
+                  {!localServerIsWorking && (
+                    <div className="w-1 h-1 rounded-full bg-red-600"></div>
+                  )}
+                  {localServerIsWorking && (
+                    <div className="w-1 h-1 rounded-full bg-green-600"></div>
+                  )}
+                  <Button onClick={() => pingLocalServer()}>
+                    Verify again
+                  </Button>
                 </div>
-                <div className={cn("flex items-center", isPinging ? '' : 'hidden')}>
+                <div
+                  className={cn("flex items-center", isPinging ? "" : "hidden")}
+                >
                   <div className="w-5 h-5 border-2 border-t-2 border-white border-t-blue-400 rounded-full animate-spin"></div>
                 </div>
-                <Button variant={"outline"} disabled={!localServerIsWorking} onClick={() => dispatch({ type: 'NEXT' })}>
+                <Button
+                  variant={"outline"}
+                  disabled={!localServerIsWorking}
+                  onClick={() => dispatch({ type: "NEXT" })}
+                >
                   Continue
                 </Button>
               </>
             )}
 
-            {state.type === 'AUDIO_CUE' && (
+            {state.type === "AUDIO_CUE" && (
               <div className="flex w-full gap-2 justify-end">
                 <AudioCuePlayButton cue={state.cue} />
-                <Button variant={"outline"} onClick={() => dispatch({ type: 'VALIDATE_CUE' })}>
+                <Button
+                  variant={"outline"}
+                  onClick={() => dispatch({ type: "CHANGE_CUE" })}
+                >
+                  Change Cue
+                </Button>
+                <Button
+                  variant={"outline"}
+                  onClick={() => dispatch({ type: "VALIDATE_CUE" })}
+                >
                   Continue
                 </Button>
               </div>
             )}
 
-            {state.type === 'CONFIRMATION' && (
+            {state.type === "CONFIRMATION" && (
               <AlertDialogAction>
-                <Button variant={"outline"} onClick={() => {
-                  dispatch({ type: 'FINISH' })
-                  completedCallback();
-                }}>Close</Button>
+                <Button
+                  variant={"outline"}
+                  onClick={() => {
+                    dispatch({ type: "FINISH" });
+                    completedCallback();
+                  }}
+                >
+                  Close
+                </Button>
               </AlertDialogAction>
             )}
           </AlertDialogFooter>

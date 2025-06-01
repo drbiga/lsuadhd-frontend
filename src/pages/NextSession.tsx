@@ -46,10 +46,10 @@ export default function NextSession() {
   const [sessionProgressData, setSessionProgressData] =
     useState<SessionProgressData | null>(null);
 
-  const [completedPreSessionChecks, setCompletedPreSessionChecks] = useState(false);
+  const [completedPreSessionChecks, setCompletedPreSessionChecks] =
+    useState(false);
 
   // State recovery and initialization code below (right above the return statement).
-
 
   const { authState } = useAuth();
 
@@ -129,7 +129,7 @@ export default function NextSession() {
     })();
   }, [authState, setSessionProgressData]);
 
-  useEffect(() => { }, [sessionHasStarted]);
+  useEffect(() => {}, [sessionHasStarted]);
 
   return (
     <PageContainer>
@@ -138,8 +138,13 @@ export default function NextSession() {
         {!sessionHasStarted && !completedPreSessionChecks && (
           <div className="h-full flex flex-col justify-center items-center gap-4">
             <h2 className="text-xl">Welcome</h2>
-            <p className="">You are about to go through some pre-session checks. Please press begin</p>
-            <PreSessionChecks completedCallback={() => setCompletedPreSessionChecks(true)} />
+            <p className="">
+              You are about to go through some pre-session checks. Please press
+              begin
+            </p>
+            <PreSessionChecks
+              completedCallback={() => setCompletedPreSessionChecks(true)}
+            />
           </div>
         )}
 
@@ -160,9 +165,8 @@ export default function NextSession() {
                     during this session.
                   </SessionItemComment>
                   <SessionItemComment>
-                    If you are currently wearing the headset, then
-                    please take it off to continue your session
-                    properly.
+                    If you are currently wearing the headset, then please take
+                    it off to continue your session properly.
                   </SessionItemComment>
                   <SessionItemComment>
                     Your sessions with the headset begin at session #3
@@ -184,9 +188,7 @@ export default function NextSession() {
                 </>
               )}
 
-              <SessionItemComment>
-                Are you ready to do this?
-              </SessionItemComment>
+              <SessionItemComment>Are you ready to do this?</SessionItemComment>
 
               {nextSession && nextSession.seqnum > 2 && (
                 <AlertDialog>
@@ -195,12 +197,10 @@ export default function NextSession() {
                   </AlertDialogTrigger>
                   <AlertDialogContent>
                     <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        VR Headset
-                      </AlertDialogTitle>
+                      <AlertDialogTitle>VR Headset</AlertDialogTitle>
                       <p>
-                        You were supposed to be wearing the VR headset
-                        already. Are you?
+                        You were supposed to be wearing the VR headset already.
+                        Are you?
                       </p>
                       <p>
                         If not, it's possible you missed something on the
@@ -209,7 +209,10 @@ export default function NextSession() {
                       <p>Please double check.</p>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogAction className="bg-primary" onClick={() => handleStartSession()}>
+                      <AlertDialogAction
+                        className="bg-primary"
+                        onClick={() => handleStartSession()}
+                      >
                         Start!
                       </AlertDialogAction>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
@@ -226,42 +229,50 @@ export default function NextSession() {
           </div>
         )}
 
-        {sessionHasStarted && sessionProgressData?.stage !== Stage.HOMEWORK && (
-          <header className="w-full flex gap-8 fixed bg-background opacity-30 transition-all duration-300 hover:opacity-100">
-            {/* <PageTitle>Next Session</PageTitle> */}
+        {sessionHasStarted &&
+          sessionProgressData &&
+          sessionProgressData.stage !== Stage.HOMEWORK && (
+            <>
+              {/* Floating session info box in top-left corner */}
+              <div className="relative">
+                <div className="absolute top-5 left-5 bg-slate-100 dark:bg-slate-700 border border-slate-600 rounded-xl p-4 flex flex-col gap-2 text-sm">
+                  <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
+                  <SessionItemStage>
+                    {sessionProgressData?.stage}
+                  </SessionItemStage>
+                  {sessionProgressData && (
+                    <SessionItemComment>
+                      Remaining time:{" "}
+                      {presentRemainingTime(
+                        sessionProgressData.remainingTimeSeconds
+                      )}
+                    </SessionItemComment>
+                  )}
+                </div>
+              </div>
 
-            <div className="ml-8 flex items-center justify-center gap-4">
-              <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
-              <SessionItemStage>{sessionProgressData?.stage}</SessionItemStage>
-              {sessionProgressData && (
-                <>
-                  <SessionItemComment>
-                    Remaining time:{" "}
-                    {presentRemainingTime(
-                      sessionProgressData.remainingTimeSeconds
-                    )}
-                  </SessionItemComment>
-                  {sessionProgressData.stage === Stage.READCOMP &&
-                    sessionProgressData.remainingTimeSeconds <= 0 && (
-                      <Button
-                        onClick={() => {
-                          if (authState.session)
-                            sessionExecutionService.startHomeworkForStudent(
-                              authState.session?.user.username
-                            );
-                        }}
-                      >
-                        Proceed to homework
-                      </Button>
-                    )}
-                </>
-              )}
-            </div>
-          </header>
-        )}
+              {/* Proceed to homework button only appears when READCOMP is over */}
+              {sessionProgressData.stage === Stage.READCOMP &&
+                sessionProgressData.remainingTimeSeconds <= 5 && (
+                  <div className="fixed bottom-4 right-7">
+                    <Button
+                      onClick={() => {
+                        if (authState.session)
+                          sessionExecutionService.startHomeworkForStudent(
+                            authState.session.user.username
+                          );
+                      }}
+                      className="bg-slate-300 dark:bg-slate-700 px-6 py-3 rounded-xl hover:scale-105 border border-slate-600"
+                    >
+                      Proceed to homework
+                    </Button>
+                  </div>
+                )}
+            </>
+          )}
 
         {sessionHasStarted && sessionProgressData?.stage === Stage.HOMEWORK && (
-          <header className="w-full pl-16 pt-8 max-w-[84vw] flex justify-between px-4 fixed">
+          <header className="w-full pl-10 pt-8 max-w-[84vw] flex justify-between px-5 fixed">
             <PageTitle>Next Session</PageTitle>
 
             <div className="ml-8 flex items-center justify-center gap-4">
@@ -363,7 +374,7 @@ export default function NextSession() {
                       </WalkthroughInstructionsTitle>
                       <WalkthroughInstructionsDescription>
                         <p>
-                          <strong>REMINDER:</strong>
+                          <strong>REMINDER: </strong>
                           Homework sessions must involve active work that
                           involves typing. This means that you are using active
                           studying techniques while reading (taking notes,

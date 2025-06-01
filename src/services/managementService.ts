@@ -10,7 +10,7 @@ export type Manager = {
 export type Student = {
     name: string;
     group: string;
-    survey_queue_link?: string;
+    survey_id?: string;
 }
 
 export type SessionGroup = {
@@ -55,13 +55,14 @@ class ManagementService {
         return response.data;
     }
 
-    public async createStudent(studentName: string, sessionGroupName: string): Promise<Student> {
+    public async createStudent(studentName: string, sessionGroupName: string, surveyId?: string): Promise<Student> {
         let response;
         try {
             response = await api.post('/management/student', {}, {
                 params: {
                 student_name: studentName,
                 session_group_name: sessionGroupName,
+                survey_id: surveyId || "",
                 name_manager_requesting_operation: iamService.getCurrentSession().user.username,
             }});
         } catch (error) {
@@ -76,17 +77,17 @@ class ManagementService {
         return response.data;
     }
 
-    public async setStudentSurveyQueueLink(studentName: string, surveyQueueLink: string): Promise<void> {
+    public async setStudentSurveyId(studentName: string, surveyId: string): Promise<void> {
         await api.put(
-            `/management/student/${studentName}/survey_queue_link`,
+            `/management/student/${studentName}/survey_id`,
             {},
             {
                 params: {
-                    survey_queue_link: surveyQueueLink,
+                    survey_id: surveyId,
                     name_manager_requesting_operation: iamService.getCurrentSession().user.username,
                 }
             }
-        )
+        );
     }
 
     // public async getStudents(): Promise<Student[]> {
