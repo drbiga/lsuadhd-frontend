@@ -83,16 +83,20 @@ export default function Students() {
   const handleSetSurveyId = useCallback(
     async (studentName) => {
       if (inputRef.current) {
-        await managementService.setStudentSurveyId(
-          studentName,
-          inputRef.current?.value
-        );
+        const stringSurveyVal = inputRef.current.value;
+        const integerSurveyVal = stringSurveyVal ? parseInt(stringSurveyVal, 10) : undefined;
+        
+        if (!isNaN(integerSurveyVal!)) {
+          await managementService.setStudentSurveyId(
+            studentName, integerSurveyVal
+          );
+        }
         setStudents(
           students.map((s) => {
             if (s.name === studentName) {
               return {
                 ...s,
-                survey_id: inputRef.current?.value,
+                survey_id: integerSurveyVal,
               };
             } else {
               return s;
@@ -138,8 +142,8 @@ export default function Students() {
                 ))}
               </select>
               <input
-                type="text"
-                placeholder="Survey ID"
+                type="number"
+                placeholder="Survey ID (Optional)"
                 className="bg-accent p-2 rounded-lg"
                 {...register("surveyId", { required: false })}
               />
@@ -169,7 +173,7 @@ export default function Students() {
                 <p>
                   <span className="font-bold">Session Group:</span> {s.group}
                 </p>
-                {s.survey_id ? (
+                {typeof s.survey_id === 'number' ? (
                   <p>Survey ID: {s.survey_id}</p>
                 ) : (
                   <p>
@@ -182,7 +186,7 @@ export default function Students() {
                         <DialogHeader>
                           <DialogTitle>Survey ID</DialogTitle>
                         </DialogHeader>
-                        <Input ref={inputRef} />
+                        <Input type="number" ref={inputRef} />
                         <DialogClose className="flex justify-end gap-4">
                           <Button>Cancel</Button>
                           <Button onClick={() => handleSetSurveyId(s.name)}>

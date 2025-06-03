@@ -10,7 +10,7 @@ export type Manager = {
 export type Student = {
     name: string;
     group: string;
-    survey_id?: string;
+    survey_id?: number;
 }
 
 export type SessionGroup = {
@@ -55,16 +55,17 @@ class ManagementService {
         return response.data;
     }
 
-    public async createStudent(studentName: string, sessionGroupName: string, surveyId?: string): Promise<Student> {
+    public async createStudent(studentName: string, sessionGroupName: string, surveyId?: number): Promise<Student> {
         let response;
         try {
             response = await api.post('/management/student', {}, {
                 params: {
-                student_name: studentName,
-                session_group_name: sessionGroupName,
-                survey_id: surveyId || "",
-                name_manager_requesting_operation: iamService.getCurrentSession().user.username,
-            }});
+                    student_name: studentName,
+                    session_group_name: sessionGroupName,
+                    name_manager_requesting_operation: iamService.getCurrentSession().user.username,
+                    survey_id: surveyId || null,
+                }
+            });
         } catch (error) {
             if (error instanceof AxiosError) {
                 toast.error(error.response?.data.detail)
@@ -77,7 +78,7 @@ class ManagementService {
         return response.data;
     }
 
-    public async setStudentSurveyId(studentName: string, surveyId: string): Promise<void> {
+    public async setStudentSurveyId(studentName: string, surveyId?: number): Promise<void> {
         await api.put(
             `/management/student/${studentName}/survey_id`,
             {},
