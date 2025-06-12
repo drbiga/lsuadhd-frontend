@@ -77,10 +77,12 @@ class SessionExecutionService {
     }
 
     public async createStudent(studentName: string, studentPassword: string): Promise<Student> {
-        const response = await api.post('/session_execution/student', {}, {params: {
-            student_name: studentName,
-            password: studentPassword
-        }});
+        const response = await api.post('/session_execution/student', {}, {
+            params: {
+                student_name: studentName,
+                password: studentPassword
+            }
+        });
         return response.data;
     }
 
@@ -120,7 +122,7 @@ class SessionExecutionService {
     public async startSessionForStudent(studentName: string, updateCallback: (sessionProgressData: SessionProgressData) => void): Promise<Session> {
         try {
             const response = await api.post(`/session_execution/student/${studentName}/session`);
-    
+
             this.websocket = createWebSocket(studentName);
             this.websocket.addEventListener('message', (event) => {
                 const data = JSON.parse(event.data);
@@ -131,7 +133,7 @@ class SessionExecutionService {
                     remainingTimeSeconds: data.remaining_time
                 });
             });
-    
+
             try {
                 await axios.post('http://localhost:8001/collection');
             } catch {
@@ -162,7 +164,7 @@ class SessionExecutionService {
     }
 
     private checkInitiateTrackingConditions(stage: Stage, remainingTimeSeconds: number): boolean {
-        return !this.isUploading && stage === Stage.HOMEWORK && remainingTimeSeconds < 10*60
+        return !this.isUploading && stage === Stage.HOMEWORK && remainingTimeSeconds < 10 * 60
     }
 
     public setUpdateCallback(studentName: string, updateCallback: (sessionProgressData: SessionProgressData) => void) {
@@ -194,13 +196,13 @@ class SessionExecutionService {
 
 function createWebSocket(studentName: string): WebSocket {
     const session = iamService.getCurrentSession();
-    const socket = new WebSocket(`${import.meta.env.VITE_WEBSOCKET_PROTOCOL || "https" }://${import.meta.env.VITE_BACKEND_HOST}:${import.meta.env.VITE_BACKEND_PORT}/session_execution/student/${studentName}/session/observer?token=${session.token}`); // Replace with your actual WebSocket URL
+    const socket = new WebSocket(`${import.meta.env.VITE_WEBSOCKET_PROTOCOL || "https"}://${import.meta.env.VITE_BACKEND_HOST}:${import.meta.env.VITE_BACKEND_PORT}/session_execution/student/${studentName}/session/observer?token=${session.token}`); // Replace with your actual WebSocket URL
     // const socket = new WebSocket(`https://${import.meta.env.VITE_BACKEND_HOST}:${import.meta.env.VITE_BACKEND_PORT}/session_execution/student/${studentName}/session/observer?token=${session.token}`); // Replace with your actual WebSocket URL
 
     socket.onopen = () => {
-      console.log('WebSocket connection established.');
+        console.log('WebSocket connection established.');
     };
-    
+
     socket.onclose = (event) => {
         if (event.wasClean) {
             console.log(`WebSocket closed cleanly, code=${event.code}, reason=${event.reason}`);
@@ -208,7 +210,7 @@ function createWebSocket(studentName: string): WebSocket {
             console.error('WebSocket connection closed unexpectedly');
         }
     };
-    
+
     socket.onerror = (error) => {
         console.error(`WebSocket error: ${error}`);
     };

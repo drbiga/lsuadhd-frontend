@@ -48,6 +48,7 @@ export default function NextSession() {
 
   const [completedPreSessionChecks, setCompletedPreSessionChecks] =
     useState(false);
+  const [acknowledgedChargingReminder, setAcknowledgedChargingReminder] = useState(false);
 
   // State recovery and initialization code below (right above the return statement).
 
@@ -92,7 +93,7 @@ export default function NextSession() {
       setSessionHasStarted(true);
       sidebarRef.current?.autoCollapse();
     }
-  }, [authState, nextSession]);
+  }, [authState.session, handleSessionProgressDataUpdate]);
 
   // State recovery
   // In case the user has to go outside the next session page and returns, they need
@@ -183,7 +184,7 @@ export default function NextSession() {
                   <SessionItemComment>
                     {nextSession?.has_feedback
                       ? "You are going to receive some feedback this session"
-                      : "There will be no feedbacks for this session"}
+                      : "There will be no feedback for this session"}
                   </SessionItemComment>
                 </>
               )}
@@ -435,14 +436,42 @@ export default function NextSession() {
               </>
             )}
             {sessionProgressData.stage === Stage.FINISHED && (
-              <div className="h-full w-full flex flex-col items-center justify-center">
-                <h2 className="text-lg">You have finished your session</h2>
-                <p>Please refer back to the instructions sheet.</p>
-                <p>
-                  At this point, you should{" "}
-                  <strong>turn off the laptop and the headset</strong>
-                </p>
-              </div>
+              <>
+                {nextSession && !nextSession.no_equipment && !acknowledgedChargingReminder && (
+                  <AlertDialog open={true}>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle className="text-red-800 dark:text-red-200">
+                          Important Reminder
+                        </AlertDialogTitle>
+                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                          <strong>Please remember to charge your headset</strong> after completing this session 
+                          to make sure you don't run out of battery in your next session!
+                        </p>
+                      </AlertDialogHeader>
+                      <AlertDialogAction
+                        className="bg-slate-300 dark:bg-slate-700
+                        hover:bg-slate-700 hover:text-slate-100 dark:hover:bg-slate-400 dark:hover:text-slate-900
+                        transition-all duration-100"
+                        onClick={() => setAcknowledgedChargingReminder(true)}
+                      >
+                        Continue
+                      </AlertDialogAction>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+
+                {(acknowledgedChargingReminder || (nextSession && nextSession.no_equipment)) && (
+                  <div className="h-full w-full flex flex-col items-center justify-center">
+                    <h2 className="text-lg">You have finished your session</h2>
+                    <p>Please refer back to the instructions sheet.</p>
+                    <p>
+                      At this point, you should{" "}
+                      <strong>turn off the laptop and the headset</strong>
+                    </p>
+                  </div>
+                )}
+              </>
             )}
           </>
         )}

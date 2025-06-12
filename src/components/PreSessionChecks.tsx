@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 export type PreSessionChecksSteps =
   | { type: "WELCOME" }
   | { type: "LOCAL_SERVER" }
+  | { type: "HEADPHONE_CHECK" }
   | { type: "VR_MODE_PASSTHROUGH" }
   | { type: "AUDIO_CUE"; answer: string; cue: string; error?: string }
   | { type: "CONFIRMATION" }
@@ -49,6 +50,9 @@ export function checksReducer(
       if (action.type === "NEXT") return { type: "LOCAL_SERVER" };
       break;
     case "LOCAL_SERVER":
+      if (action.type === "NEXT") return { type: "HEADPHONE_CHECK" };
+      break;
+    case "HEADPHONE_CHECK":
       if (action.type === "NEXT") return { type: "VR_MODE_PASSTHROUGH" };
       break;
     case "VR_MODE_PASSTHROUGH":
@@ -136,11 +140,11 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
       }
     }
     setIsPinging(false);
-  }, [setLocalServerIsWorking]);
+  }, [setLocalServerIsWorking, initializeLocalServer]);
 
   useEffect(() => {
     pingLocalServer();
-  }, []);
+  }, [pingLocalServer]);
 
   return (
     <>
@@ -213,6 +217,26 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                 </AlertDialogDescription>
               </>
             )}
+            {state.type === "HEADPHONE_CHECK" && (
+              <>
+                <AlertDialogTitle>Headphone Setup & Volume</AlertDialogTitle>
+                <AlertDialogDescription className="flex flex-col gap-4">
+                  <p>
+                    Plug the headphones into the headset using the headphone jack on the right strap of the headset.
+                  </p>
+                  <p>
+                    Then, make sure you have the volume of the headset high enough (is not set to 0). You can raise the volume using the volume buttons on the bottom right section of the headset.
+                  </p>
+                  <div className="flex justify-center">
+                    <img
+                      width={"60%"}
+                      src="./headset-vol-buttons.jpg"
+                      alt="volume buttons"
+                    />
+                  </div>
+                </AlertDialogDescription>
+              </>
+            )}
             {state.type === "VR_MODE_PASSTHROUGH" && (
               <>
                 <AlertDialogTitle>Setting VR mode</AlertDialogTitle>
@@ -258,7 +282,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
           )}
 
           <AlertDialogFooter>
-            {["WELCOME", "VR_MODE_PASSTHROUGH"].includes(state.type) && (
+            {["WELCOME", "VR_MODE_PASSTHROUGH", "HEADPHONE_CHECK"].includes(state.type) && (
               <Button
                 variant={"outline"}
                 onClick={() => dispatch({ type: "NEXT" })}
