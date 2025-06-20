@@ -16,6 +16,7 @@ import { CirclePlay } from "lucide-react";
 import axios, { AxiosError } from "axios";
 import { useAuth } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
+// import { set } from "react-hook-form";
 
 export type PreSessionChecksSteps =
   | { type: "WELCOME" }
@@ -115,36 +116,58 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const audioCueAnswerRef = useRef(null);
   const [localServerIsWorking, setLocalServerIsWorking] = useState(false);
-  const [isPinging, setIsPinging] = useState(false);
+  const [personalAnalyticsIsWorking, setPersonalAnalyticsIsWorking] = useState(false);
+  const [isPingingLocal, setIsPingingLocal] = useState(false);
+  const [isPingingPersonal, setIsPingingPersonal] = useState(false);
 
   const { initializeLocalServer } = useAuth();
 
   const pingLocalServer = useCallback(async () => {
-    setIsPinging(true);
+    setIsPingingLocal(true);
     try {
       const response = await axios.get("http://localhost:8001/session");
       if (response.data) {
         setLocalServerIsWorking(true);
       }
     } catch (e: any) {
+      setLocalServerIsWorking(false);
       if (e instanceof AxiosError) {
         if (e.response?.status === 412) {
           initializeLocalServer();
           setLocalServerIsWorking(true);
-        } else if (e.code === "ERR_NETWORK") {
-          setLocalServerIsWorking(false);
         }
       }
-      if (e.code === "ECONNREFUSED") {
-        setLocalServerIsWorking(false);
-      }
+    } finally {
+      setIsPingingLocal(false);
     }
-    setIsPinging(false);
-  }, [setLocalServerIsWorking, initializeLocalServer]);
+  }, [initializeLocalServer]);
 
+  const pingPersonalAnalytics = useCallback(async () => {
+    setIsPingingPersonal(true);
+    try {
+      const response = await axios.get("http://localhost:8001/checkPA");
+      if (response.data) {
+        setPersonalAnalyticsIsWorking(true);
+      }
+    } catch (e: any) {
+      setPersonalAnalyticsIsWorking(false);
+      if (e instanceof AxiosError && e.code === "ERR_NETWORK") {
+        console.error("Network error:", e);
+      }
+      if (e.code === "ECONNREFUSED") {
+        console.error("Connection refused:", e);
+      }
+    } finally {
+      setIsPingingPersonal(false);
+    }
+  }, []);
+
+  const isPinging = isPingingLocal || isPingingPersonal;
+  
   useEffect(() => {
     pingLocalServer();
-  }, [pingLocalServer]);
+    pingPersonalAnalytics();
+  }, [pingLocalServer, pingPersonalAnalytics]);
 
   return (
     <>
@@ -194,7 +217,9 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                   <p>
                     It is an intermediary app that launches and runs on the
                     background to take care of any and all communications
-                    between the laptop, the browser, and our servers
+                    between the laptop, the browser, and our servers. Alongside
+                    it, the Personal Analytics app should also be running in
+                    the background.
                   </p>
                   {localServerIsWorking && (
                     <p className="flex items-center gap-1">
@@ -208,11 +233,31 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                         <p className="w-1 h-1 rounded-full bg-red-600"></p>
                         <p>The local server appears to be offline</p>
                       </p>
-                      <p>
-                        If you cannot resolve this, please contact Matheus by
-                        email mcost16@lsu.edu
-                      </p>
                     </>
+                  )}
+                  {personalAnalyticsIsWorking && (
+                    <p className="flex items-center gap-1">
+                      <p className="w-1 h-1 rounded-full bg-green-600"></p>
+                      <p>
+                        The Personal Analytics app appears to be online and
+                        working
+                      </p>
+                    </p>
+                  )}
+                  {!personalAnalyticsIsWorking && (
+                    <p className="flex items-center gap-1">
+                      <p className="w-1 h-1 rounded-full bg-red-600"></p>
+                      <p>
+                        The Personal Analytics app appears to be offline.
+                      </p>
+                    </p>
+                  )}
+                  {(!localServerIsWorking || !personalAnalyticsIsWorking) && (
+                    <p className="text-red-500">
+                      If the PersonalAnalytics app or the command prompt is currently running, 
+                      please close them. Then, double-click the desktop shortcut to restart the application.
+                      If the issue persists, contact Matheus at mcost16@lsu.edu for assistance.
+                    </p>
                   )}
                 </AlertDialogDescription>
               </>
@@ -295,18 +340,20 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               <>
                 <div
                   className={cn(
-                    "flex items-center gap-0",
+                    "flex items-center gap-2",
                     isPinging ? "hidden" : ""
                   )}
                 >
-                  {!localServerIsWorking && (
-                    <div className="w-1 h-1 rounded-full bg-red-600"></div>
+                  {localServerIsWorking && personalAnalyticsIsWorking ? (
+                    <div className="w-2 h-2 rounded-full bg-green-600"></div>
+                  ) : (
+                    <div className="w-2 h-2 rounded-full bg-red-600"></div>
                   )}
-                  {localServerIsWorking && (
-                    <div className="w-1 h-1 rounded-full bg-green-600"></div>
-                  )}
-                  <Button onClick={() => pingLocalServer()}>
-                    Verify again
+                  <Button 
+                    disabled={isPinging}
+                    onClick={() => {pingLocalServer(); pingPersonalAnalytics();}}
+                  >
+                    {isPinging ? "Checking..." : "Verify again"}
                   </Button>
                 </div>
                 <div
@@ -316,7 +363,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                 </div>
                 <Button
                   variant={"outline"}
-                  disabled={!localServerIsWorking}
+                  disabled={!localServerIsWorking || !personalAnalyticsIsWorking}
                   onClick={() => dispatch({ type: "NEXT" })}
                 >
                   Continue

@@ -252,7 +252,6 @@ export default function NextSession() {
                 </div>
               </div>
 
-              {/* Proceed to homework button only appears when READCOMP is over */}
               {sessionProgressData.stage === Stage.READCOMP &&
                 sessionProgressData.remainingTimeSeconds <= 5 && (
                   <div className="fixed bottom-4 right-7">
@@ -444,7 +443,7 @@ export default function NextSession() {
                         <AlertDialogTitle className="text-red-800 dark:text-red-200">
                           Important Reminder
                         </AlertDialogTitle>
-                        <p className="text-gray-700 dark:text-gray-300 leading-relaxed">
+                        <p className="text-gray-700 dark:text-gray-300">
                           <strong>Please remember to charge your headset</strong> after completing this session 
                           to make sure you don't run out of battery in your next session!
                         </p>
