@@ -30,6 +30,7 @@ import sessionExecutionService, {
   Stage,
 } from "@/services/sessionExecution";
 import { useCallback, useEffect, useRef, useState } from "react";
+//import { set } from "react-hook-form";
 
 enum HasNextSessionValue {
   LOADING = -1,
@@ -43,12 +44,12 @@ export default function NextSession() {
     HasNextSessionValue.LOADING
   );
   const [sessionHasStarted, setSessionHasStarted] = useState<boolean>(false);
-  const [sessionProgressData, setSessionProgressData] =
-    useState<SessionProgressData | null>(null);
-
-  const [completedPreSessionChecks, setCompletedPreSessionChecks] =
-    useState(false);
-  const [acknowledgedChargingReminder, setAcknowledgedChargingReminder] = useState(false);
+  const [sessionProgressData, setSessionProgressData] = useState<SessionProgressData | null>(null);
+  const [completedPreSessionChecks, setCompletedPreSessionChecks] = useState(false);
+  
+  const [showReadcompModal, setShowReadcompModal] = useState(false);
+  const [modalTimerRef, setModalTimerRef] = useState<NodeJS.Timeout | null>(null);
+  const [surveySubmitted, setSurveySubmitted] = useState(false);
 
   // State recovery and initialization code below (right above the return statement).
 
@@ -130,7 +131,13 @@ export default function NextSession() {
     })();
   }, [authState, setSessionProgressData]);
 
-  useEffect(() => {}, [sessionHasStarted]);
+  useEffect(() => {
+    return () => {
+      if (modalTimerRef) {
+        clearTimeout(modalTimerRef);
+      }
+    };
+  }, [modalTimerRef]);
 
   return (
     <PageContainer>
@@ -210,11 +217,13 @@ export default function NextSession() {
                       <p>Please double check.</p>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                      <AlertDialogAction
-                        className="bg-primary"
-                        onClick={() => handleStartSession()}
-                      >
+                      <AlertDialogAction>
+                        <Button
+                          variant="default"
+                          onClick={() => handleStartSession()}
+                        >
                         Start!
+                        </Button>
                       </AlertDialogAction>
                       <AlertDialogCancel>Cancel</AlertDialogCancel>
                     </AlertDialogFooter>
@@ -234,7 +243,6 @@ export default function NextSession() {
           sessionProgressData &&
           sessionProgressData.stage !== Stage.HOMEWORK && (
             <>
-              {/* Floating session info box in top-left corner */}
               <div className="relative">
                 <div className="absolute top-5 left-5 bg-slate-100 dark:bg-slate-700 border border-slate-600 rounded-xl p-4 flex flex-col gap-2 text-sm">
                   <SessionItemSeqnum>{nextSession?.seqnum}</SessionItemSeqnum>
@@ -251,23 +259,6 @@ export default function NextSession() {
                   )}
                 </div>
               </div>
-
-              {sessionProgressData.stage === Stage.READCOMP &&
-                sessionProgressData.remainingTimeSeconds <= 5 && (
-                  <div className="fixed bottom-4 right-7">
-                    <Button
-                      onClick={() => {
-                        if (authState.session)
-                          sessionExecutionService.startHomeworkForStudent(
-                            authState.session.user.username
-                          );
-                      }}
-                      className="bg-slate-300 dark:bg-slate-700 px-6 py-3 rounded-xl hover:scale-105 border border-slate-600"
-                    >
-                      Proceed to homework
-                    </Button>
-                  </div>
-                )}
             </>
           )}
 
@@ -310,41 +301,98 @@ export default function NextSession() {
                     </WalkthroughInstructionsDescription>
                   </Walkthrough>
                 )}
+
                 {sessionProgressData.remainingTimeSeconds <= 5 && (
-                  // If readcomp is over
-                  <Walkthrough>
+                  <Walkthrough onClose={() => setShowReadcompModal(true)}>
                     <WalkthroughInstructionsTitle>
-                      Time's up!
+                      Your Reading Comprehension Survey Time is Up!
                     </WalkthroughInstructionsTitle>
                     <WalkthroughInstructionsDescription>
-                      <p>
-                        Your time for this reading-comprehension section is
-                        over.
-                      </p>
-                      <ol className="list-decimal">
-                        <li>
-                          <p>
-                            <strong>Scroll</strong> all the way down on the
-                            survey and <strong>click</strong> the submit
-                            button&nbsp; to <strong>save</strong> your answers.
-                          </p>
-                        </li>
-                        <li>
-                          <p>
-                            <strong>After</strong> you submit your answers,
-                            please <strong>click</strong> the "Proceed to
-                            homework" button on the{" "}
-                            <strong>top-right corner</strong>.
-                          </p>
-                        </li>
-                      </ol>
+                      <div className="space-y-3">
+                        <p>Your 10-minute reading comprehension session has ended.</p>
+                        <p className="font-medium">
+                          Before proceeding, please make sure you have:
+                        </p>
+                        <ol className="list-disc list-inside space-y-2 pl-2">
+                          <li>Scrolled to the bottom of the survey</li>
+                          <li>Clicked the <strong>Submit</strong> button to save your answers</li>
+                        </ol>
+                      </div>
                     </WalkthroughInstructionsDescription>
                   </Walkthrough>
                 )}
+
+                {showReadcompModal && (
+                  <AlertDialog open={showReadcompModal}>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Have you submitted your survey?</AlertDialogTitle>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <Button
+                          variant="default"
+                          onClick={() => {
+                            setShowReadcompModal(false);
+                            setSurveySubmitted(false);
+                            
+                            const timer = setTimeout(() => {
+                              setShowReadcompModal(true);
+                            }, 10000);
+                            setModalTimerRef(timer);
+                          }}
+                        >
+                          No, let me submit it
+                        </Button>
+                        
+                        {!surveySubmitted ? (
+                          <Button
+                            variant="default"
+                            onClick={() => setSurveySubmitted(true)}
+                          >
+                            Yes, I submitted it
+                          </Button>
+                        ) : (
+                          <Button
+                            variant="default"
+                            className="bg-green-600 hover:bg-green-700"
+                            onClick={() => {
+                              if (modalTimerRef) {
+                                clearTimeout(modalTimerRef);
+                                setModalTimerRef(null);
+                              }
+                              
+                              if (authState.session) {
+                                sessionExecutionService.startHomeworkForStudent(
+                                  authState.session.user.username
+                                );
+                              }
+                              setShowReadcompModal(false);
+                            }}
+                          >
+                            Proceed to Homework
+                          </Button>
+                        )}
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+
                 <iframe
                   src={nextSession?.readcomp_link || nextSession?.start_link}
                   className="h-full w-full"
                 ></iframe>
+
+                {sessionProgressData.remainingTimeSeconds <= 0 && !showReadcompModal && (
+                  <div className="fixed bottom-4 right-7 z-50">
+                    <Button
+                      onClick={() => setShowReadcompModal(true)}
+                      variant="default"
+                      className="text-sm"
+                    >
+                      Click to return to survey submission confirmation
+                    </Button>
+                  </div>
+                )}
               </>
             )}
             {sessionProgressData.stage === Stage.SURVEY && (
@@ -436,40 +484,36 @@ export default function NextSession() {
             )}
             {sessionProgressData.stage === Stage.FINISHED && (
               <>
-                {nextSession && !nextSession.no_equipment && !acknowledgedChargingReminder && (
-                  <AlertDialog open={true}>
+                {nextSession && !nextSession.no_equipment && (
+                  <AlertDialog defaultOpen>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle className="text-red-800 dark:text-red-200">
+                        <AlertDialogTitle>
                           Important Reminder
                         </AlertDialogTitle>
-                        <p className="text-gray-700 dark:text-gray-300">
+                        <p>
                           <strong>Please remember to charge your headset</strong> after completing this session 
                           to make sure you don't run out of battery in your next session!
                         </p>
                       </AlertDialogHeader>
-                      <AlertDialogAction
-                        className="bg-slate-300 dark:bg-slate-700
-                        hover:bg-slate-700 hover:text-slate-100 dark:hover:bg-slate-400 dark:hover:text-slate-900
-                        transition-all duration-100"
-                        onClick={() => setAcknowledgedChargingReminder(true)}
-                      >
+                      <AlertDialogCancel>
                         Continue
-                      </AlertDialogAction>
+                      </AlertDialogCancel>
                     </AlertDialogContent>
                   </AlertDialog>
                 )}
 
-                {(acknowledgedChargingReminder || (nextSession && nextSession.no_equipment)) && (
-                  <div className="h-full w-full flex flex-col items-center justify-center">
-                    <h2 className="text-lg">You have finished your session</h2>
-                    <p>Please refer back to the instructions sheet.</p>
-                    <p>
-                      At this point, you should{" "}
-                      <strong>turn off the laptop and the headset</strong>
-                    </p>
-                  </div>
-                )}
+                <div className="h-full w-full flex flex-col items-center justify-center">
+                  <h2 className="text-lg">You have finished your session</h2>
+                  <p>Please refer back to the instructions sheet.</p>
+                  <p>
+                    At this point, you should{" "}
+                    <strong>
+                      turn off the laptop
+                      {!nextSession?.no_equipment && <span> and the headset</span>}
+                    </strong>
+                  </p>
+                </div>
               </>
             )}
           </>

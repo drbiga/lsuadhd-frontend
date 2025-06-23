@@ -98,7 +98,7 @@ const AudioCuePlayButton = ({ cue }: { cue: string }) => {
 
   return (
     <div>
-      <Button className="flex gap-2" variant={"link"} onClick={playSound}>
+      <Button className="flex gap-2 p-0 m-0" variant={"link"} size={"sm"} onClick={playSound}>
         <CirclePlay />
         Play Sound
       </Button>
@@ -181,9 +181,8 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
         open={dialogIsOpen}
         onOpenChange={(v) => {
           setDialogIsOpen(v);
-          if (!v) {
-            dispatch({ type: "FINISH" });
-            completedCallback();
+          if (v) {
+            setDialogIsOpen(v);
           }
         }}
       >
@@ -239,8 +238,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                     <p className="flex items-center gap-1">
                       <p className="w-1 h-1 rounded-full bg-green-600"></p>
                       <p>
-                        The Personal Analytics app appears to be online and
-                        working
+                        The Personal Analytics app appears to be online
                       </p>
                     </p>
                   )}
@@ -270,7 +268,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                     Plug the headphones into the headset using the headphone jack on the right strap of the headset.
                   </p>
                   <p>
-                    Then, make sure you have the volume of the headset high enough (is not set to 0). You can raise the volume using the volume buttons on the bottom right section of the headset.
+                    Then, make sure you have the volume of the headset high enough. You can raise the volume using the volume buttons on the bottom right section of the headset.
                   </p>
                   <div className="flex justify-center">
                     <img
@@ -304,6 +302,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
             {state.type === "CONFIRMATION" && (
               <>
                 <AlertDialogTitle>Success!</AlertDialogTitle>
+                
                 <AlertDialogDescription>
                   You have finished all pre-session checks
                 </AlertDialogDescription>
@@ -319,7 +318,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                 onChange={(e) =>
                   dispatch({ type: "SET_AUDIO_CUE", answer: e.target.value })
                 }
-              />
+              /> 
               {state.error && (
                 <p className="text-red-500 text-sm">{state.error}</p>
               )}
@@ -372,16 +371,18 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
             )}
 
             {state.type === "AUDIO_CUE" && (
-              <div className="flex w-full gap-2 justify-end">
+              <div className="flex w-full justify-end items-center">
                 <AudioCuePlayButton cue={state.cue} />
                 <Button
-                  variant={"outline"}
+                  variant="link"
+                  size="sm"
                   onClick={() => dispatch({ type: "CHANGE_CUE" })}
                 >
                   Change Cue
                 </Button>
+
                 <Button
-                  variant={"outline"}
+                  variant="outline"
                   onClick={() => dispatch({ type: "VALIDATE_CUE" })}
                 >
                   Continue
@@ -395,6 +396,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                   variant={"outline"}
                   onClick={() => {
                     dispatch({ type: "FINISH" });
+                    setDialogIsOpen(false);
                     completedCallback();
                   }}
                 >

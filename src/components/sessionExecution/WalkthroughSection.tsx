@@ -1,5 +1,9 @@
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useState } from "react";
 import { AlertDialog, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "../ui/alert-dialog";
+
+type WalkthroughProps = PropsWithChildren<{
+  onClose?: () => void;
+}>;
 
 export function WalkthroughSection({ children }: PropsWithChildren) {
   return (
@@ -9,20 +13,26 @@ export function WalkthroughSection({ children }: PropsWithChildren) {
   );
 }
 
-export function Walkthrough({ children }: PropsWithChildren) {
+export function Walkthrough({ children, onClose }: WalkthroughProps) {
+  const [open, setOpen] = useState(true);
+
+  const handleOpenChange = (isOpen: boolean) => {
+    setOpen(isOpen);
+    if (!isOpen && onClose) {
+      onClose();
+    }
+  };
+
   return (
     <div>
-      <AlertDialog defaultOpen>
+      <AlertDialog open={open} onOpenChange={handleOpenChange}>
         <AlertDialogContent>
-          <AlertDialogHeader>
-            {children}
-          </AlertDialogHeader>
+          <AlertDialogHeader>{children}</AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Close</AlertDialogCancel>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-
     </div>
   );
 }
