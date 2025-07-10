@@ -1,9 +1,7 @@
 import { ChevronLeft, ChevronRight, Milestone, Target } from "lucide-react";
-import { forwardRef, ReactNode, useEffect, useImperativeHandle, useState } from "react";
+import { forwardRef, ReactNode, useImperativeHandle, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { DarkModeButton } from "../common/DarkModeButton";
-import { Role, useAuth } from "@/hooks/auth";
-import iamService from "@/services/iam";
 import { LogOutButton } from "../common/LogOutButton";
 import { Button } from "../common/Button";
 import { RouteNames } from "@/Routes";

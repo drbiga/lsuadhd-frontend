@@ -1,7 +1,7 @@
 import { forwardRef, useCallback, useState } from "react";
 import { Button } from "./Button";
 import { Moon, Sun } from "lucide-react";
-import { ButtonProps } from "./ui/button";
+import { ButtonProps } from "../ui/button";
 
 export const DarkModeButton = forwardRef<HTMLButtonElement, ButtonProps>(function DarkModeButton({ className, ...rest }, _) {
     const [isDarkMode, setIsDarkMode] = useState(() => {

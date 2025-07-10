@@ -19,11 +19,6 @@ type Session = {
     ip_address: string;
 }
 
-type Context = {
-    name: string;
-    roles: Role[];
-}
-
 class IamService {
     private currentSession: Session | null;
     // private localServerUpToDate: boolean;
