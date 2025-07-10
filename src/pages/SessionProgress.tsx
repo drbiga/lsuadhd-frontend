@@ -1,5 +1,5 @@
-import { PageContainer, PageMainContent, PageTitle } from "@/components/Page";
-import Sidebar from "../components/Sidebar";
+import { PageContainer, PageMainContent, PageTitle } from "@/components/layout/Page";
+import Sidebar from "../components/layout/Sidebar";
 import {
   SessionItemChart,
   SessionItemComment,
@@ -42,7 +42,7 @@ export default function SessionProgress() {
           const student = await sessionExecutionService.getStudent(
             authState.session?.user.username
           );
-          setSessionsDone(student.sessions_done);
+          setSessionsDone(student.sessions);
           const sessions =
             await sessionExecutionService.getRemainingSessionsForStudent(
               authState.session.user.username

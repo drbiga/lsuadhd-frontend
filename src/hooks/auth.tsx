@@ -118,6 +118,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 toast.error('There was an error while logging you in on our servers')
             }
             if (session) {
+                if (session.user.role === Role.MANAGER) {
+                    toast.error('Manager accounts are not permitted to access this app');
+                    return null;
+                }
+
                 api.defaults.headers.common = { Authorization: `Bearer ${session.token}` }
                 setLocalStorage(Item.SESSION_OBJ, JSON.stringify(session));
                 setAuthState({

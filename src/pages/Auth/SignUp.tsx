@@ -1,5 +1,5 @@
-import { Button } from "@/components/Button";
-import { DarkModeButton } from "@/components/DarkModeButton";
+import { Button } from "@/components/common/Button";
+import { DarkModeButton } from "@/components/common/DarkModeButton";
 import { useAuth } from "@/hooks/auth";
 import sessionExecutionService from "@/services/sessionExecution";
 import { useCallback, useEffect } from "react";

@@ -119,6 +119,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
   const [personalAnalyticsIsWorking, setPersonalAnalyticsIsWorking] = useState(false);
   const [isPingingLocal, setIsPingingLocal] = useState(false);
   const [isPingingPersonal, setIsPingingPersonal] = useState(false);
+  const [beepChecked, setBeepChecked] = useState(false);
 
   const { initializeLocalServer } = useAuth();
 
@@ -163,11 +164,21 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
   }, []);
 
   const isPinging = isPingingLocal || isPingingPersonal;
-  
+    
   useEffect(() => {
     pingLocalServer();
     pingPersonalAnalytics();
   }, [pingLocalServer, pingPersonalAnalytics]);
+
+
+  const handleCheckBeep = () => {
+    try {
+      axios.get('http://localhost:8080/play-beep')
+    } catch (error) {
+    } finally {
+      setBeepChecked(true);
+    }
+  };
 
   return (
     <>
@@ -200,76 +211,70 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
             {state.type === "LOCAL_SERVER" && (
               <>
                 <AlertDialogTitle>Supporting apps</AlertDialogTitle>
-                <AlertDialogDescription className="flex flex-col gap-8">
+                <div className="flex flex-col gap-8">
                   <div className="flex gap-4">
-                    <p>
+                    <AlertDialogDescription>
                       The moment you double clicked on the "Open this first"
                       shortcut on the desktop, you were supposed to see a
                       command prompt, which looks like this.
-                    </p>
+                    </AlertDialogDescription>
                     <img
                       width={"50%"}
                       src="./cmd.jpg"
                       alt="Command prompt image"
                     />
                   </div>
-                  <p>
+                  <AlertDialogDescription>
                     It is an intermediary app that launches and runs on the
                     background to take care of any and all communications
                     between the laptop, the browser, and our servers. Alongside
                     it, the Personal Analytics app should also be running in
                     the background.
-                  </p>
+                  </AlertDialogDescription>
                   {localServerIsWorking && (
-                    <p className="flex items-center gap-1">
-                      <p className="w-1 h-1 rounded-full bg-green-600"></p>
-                      <p>The local server appears to be online</p>
-                    </p>
+                    <AlertDialogDescription className="flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
+                      The local server appears to be online
+                    </AlertDialogDescription>
                   )}
                   {!localServerIsWorking && (
-                    <>
-                      <p className="flex items-center gap-1">
-                        <p className="w-1 h-1 rounded-full bg-red-600"></p>
-                        <p>The local server appears to be offline</p>
-                      </p>
-                    </>
+                    <AlertDialogDescription className="flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
+                      The local server appears to be offline
+                    </AlertDialogDescription>
                   )}
                   {personalAnalyticsIsWorking && (
-                    <p className="flex items-center gap-1">
-                      <p className="w-1 h-1 rounded-full bg-green-600"></p>
-                      <p>
-                        The Personal Analytics app appears to be online
-                      </p>
-                    </p>
+                    <AlertDialogDescription className="flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
+                      The Personal Analytics app appears to be online
+                    </AlertDialogDescription>
                   )}
                   {!personalAnalyticsIsWorking && (
-                    <p className="flex items-center gap-1">
-                      <p className="w-1 h-1 rounded-full bg-red-600"></p>
-                      <p>
-                        The Personal Analytics app appears to be offline.
-                      </p>
-                    </p>
+                    <AlertDialogDescription className="flex items-center gap-1">
+                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
+                      The Personal Analytics app appears to be offline.
+                    </AlertDialogDescription>
                   )}
                   {(!localServerIsWorking || !personalAnalyticsIsWorking) && (
-                    <p className="text-red-500">
+                    <AlertDialogDescription className="text-red-500">
                       If the PersonalAnalytics app or the command prompt is currently running, 
                       please close them. Then, double-click the desktop shortcut to restart the application.
                       If the issue persists, contact Matheus at mcost16@lsu.edu for assistance.
-                    </p>
+                    </AlertDialogDescription>
                   )}
-                </AlertDialogDescription>
+                </div>
               </>
             )}
             {state.type === "HEADPHONE_CHECK" && (
               <>
                 <AlertDialogTitle>Headphone Setup & Volume</AlertDialogTitle>
-                <AlertDialogDescription className="flex flex-col gap-4">
-                  <p>
+                <div className="flex flex-col gap-4">
+                  <AlertDialogDescription>
                     Plug the headphones into the headset using the headphone jack on the right strap of the headset.
-                  </p>
-                  <p>
+                  </AlertDialogDescription>
+                  <AlertDialogDescription>
                     Then, make sure you have the volume of the headset high enough. You can raise the volume using the volume buttons on the bottom right section of the headset.
-                  </p>
+                  </AlertDialogDescription>
                   <div className="flex justify-center">
                     <img
                       width={"60%"}
@@ -277,7 +282,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                       alt="volume buttons"
                     />
                   </div>
-                </AlertDialogDescription>
+                </div>
               </>
             )}
             {state.type === "VR_MODE_PASSTHROUGH" && (
@@ -320,13 +325,15 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                 }
               /> 
               {state.error && (
-                <p className="text-red-500 text-sm">{state.error}</p>
+                <AlertDialogDescription className="text-red-500 text-sm">
+                  {state.error}
+                </AlertDialogDescription>
               )}
             </>
           )}
 
           <AlertDialogFooter>
-            {["WELCOME", "VR_MODE_PASSTHROUGH", "HEADPHONE_CHECK"].includes(state.type) && (
+            {["WELCOME", "VR_MODE_PASSTHROUGH"].includes(state.type) && (
               <Button
                 variant={"outline"}
                 onClick={() => dispatch({ type: "NEXT" })}
@@ -370,6 +377,24 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               </>
             )}
 
+            {state.type === "HEADPHONE_CHECK" && (
+              <>
+                <Button
+                  variant={"outline"}
+                  onClick={() => dispatch({ type: "NEXT" })}
+                  disabled={!beepChecked}
+                >
+                  Continue
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={handleCheckBeep}
+                >
+                  Check Beep
+                </Button>
+              </>
+            )}
+
             {state.type === "AUDIO_CUE" && (
               <div className="flex w-full justify-end items-center">
                 <AudioCuePlayButton cue={state.cue} />
@@ -391,17 +416,14 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
             )}
 
             {state.type === "CONFIRMATION" && (
-              <AlertDialogAction>
-                <Button
-                  variant={"outline"}
-                  onClick={() => {
-                    dispatch({ type: "FINISH" });
-                    setDialogIsOpen(false);
-                    completedCallback();
-                  }}
-                >
-                  Close
-                </Button>
+              <AlertDialogAction
+                onClick={() => {
+                  dispatch({ type: "FINISH" });
+                  setDialogIsOpen(false);
+                  completedCallback();
+                }}
+              >
+                Close
               </AlertDialogAction>
             )}
           </AlertDialogFooter>

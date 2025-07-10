@@ -1,5 +1,5 @@
-import { Button } from "@/components/Button";
-import { PageContainer, PageTitle } from "@/components/Page";
+import { Button } from "@/components/common/Button";
+import { PageContainer, PageTitle } from "@/components/layout/Page";
 import { PreSessionChecks } from "@/components/PreSessionChecks";
 import {
   SessionItemComment,
@@ -12,7 +12,7 @@ import {
   WalkthroughInstructionsDescription,
   WalkthroughInstructionsTitle,
 } from "@/components/sessionExecution/WalkthroughSection";
-import Sidebar, { SidebarHandle } from "@/components/Sidebar";
+import Sidebar, { SidebarHandle } from "@/components/layout/Sidebar";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -303,7 +303,13 @@ export default function NextSession() {
                 )}
 
                 {sessionProgressData.remainingTimeSeconds <= 5 && (
-                  <Walkthrough onClose={() => setShowReadcompModal(true)}>
+                  <Walkthrough
+                    onClose={() => {
+                      setTimeout(() => {
+                        setShowReadcompModal(true);
+                      }, 5000);
+                    }}
+                  >
                     <WalkthroughInstructionsTitle>
                       Your Reading Comprehension Survey Time is Up!
                     </WalkthroughInstructionsTitle>
@@ -395,26 +401,9 @@ export default function NextSession() {
                 )}
               </>
             )}
-            {sessionProgressData.stage === Stage.SURVEY && (
-              <>
-                <Walkthrough>
-                  <WalkthroughInstructionsTitle>
-                    Survey
-                  </WalkthroughInstructionsTitle>
-                  <WalkthroughInstructionsDescription>
-                    <p>Please answer the following questions</p>
-                  </WalkthroughInstructionsDescription>
-                </Walkthrough>
-                <iframe
-                  src={nextSession?.post_link || nextSession?.start_link}
-                  className="h-full w-full"
-                ></iframe>
-              </>
-            )}
             {sessionProgressData.stage === Stage.HOMEWORK && (
               <>
                 {sessionProgressData.remainingTimeSeconds > 5 && (
-                  // Homework
                   <>
                     <Walkthrough>
                       <WalkthroughInstructionsTitle>
@@ -480,6 +469,22 @@ export default function NextSession() {
                     </Walkthrough>
                   </>
                 )}
+              </>
+            )}
+            {sessionProgressData.stage === Stage.SURVEY && (
+              <>
+                <Walkthrough>
+                  <WalkthroughInstructionsTitle>
+                    Survey
+                  </WalkthroughInstructionsTitle>
+                  <WalkthroughInstructionsDescription>
+                    <p>Please answer the following questions</p>
+                  </WalkthroughInstructionsDescription>
+                </Walkthrough>
+                <iframe
+                  src={nextSession?.post_link || nextSession?.start_link}
+                  className="h-full w-full"
+                ></iframe>
               </>
             )}
             {sessionProgressData.stage === Stage.FINISHED && (

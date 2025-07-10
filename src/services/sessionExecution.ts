@@ -5,9 +5,10 @@ import { toast } from "react-toastify";
 
 export type Student = {
     name: string;
-    sessions_done: Session[];
-    active_session: Session;
+    sessions: Session[];
     sessions_analytics: SessionAnalytics[];
+    survey_id?: number;
+    active_session: Session;
 }
 
 export type SessionAnalytics = {

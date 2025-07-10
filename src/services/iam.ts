@@ -50,7 +50,7 @@ class IamService {
     //     const response = await api.get(`/iam/user/${username}/role`, {headers: { Authorization: `Bearer ${token}`}});
     //     return response.data;
     // }
-    
+
     public async getSession(sessionToken: string): Promise<Session> {
         const response = await api.get(`/iam/session/${sessionToken}`);
         return response.data;
@@ -62,9 +62,9 @@ class IamService {
         else
             throw Error('No running session');
     }
-    
+
     public async createSession(username: string, password: string, ipAddress: string): Promise<Session> {
-        const response = await api.post('/iam/session', {username, password, ip_address: ipAddress})
+        const response = await api.post('/iam/session', { username, password, ip_address: ipAddress })
         this.currentSession = response.data;
         setLocalStorage(Item.SESSION_OBJ, JSON.stringify(this.currentSession));
         // this.localServerUpToDate = false;
@@ -86,11 +86,6 @@ class IamService {
     //         }
     //     }
     // }
-
-    public async searchContexts(role: Role): Promise<Context[]> {
-        const response = await api.post('/iam/context/_search', null, {params: {role}});
-        return response.data;
-    }
 }
 
 const iamService = new IamService();
