@@ -12,5 +12,5 @@ export default defineConfig({
   build: {
     outDir: './build'
   },
-  // base: '/lsuadhd-frontend/'
+  base: '/lsuadhd-frontend/'
 })
