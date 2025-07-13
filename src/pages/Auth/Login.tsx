@@ -39,7 +39,6 @@ export default function Login() {
     <div
       className="h-[100vh] w-[100vw] bg-background flex flex-col items-center justify-center relative"
     >
-      <img className="bg-background" src="meta-symbol.png" width="200px" alt="" />
       <div className="bg-primary-foreground border-[1px] border-slate-500 dark:border-slate-300 rounded-lg p-4 text-slate-200 flex flex-col gap-4">
         <h1 className="text-xl text-slate-800 dark:text-slate-200">Log In</h1>
         <div>

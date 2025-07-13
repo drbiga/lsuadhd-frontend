@@ -34,6 +34,7 @@
 
     --radius: 0.5rem;
   }
+
   .dark {
     --background: #0f172a;
     --foreground: #f1f5f9;
@@ -70,6 +71,7 @@
     @apply border-border;
     box-sizing: border-box;
   }
+
   body {
     @apply bg-background text-foreground;
   }

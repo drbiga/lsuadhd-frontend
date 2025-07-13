@@ -1,6 +1,6 @@
 import axios, { AxiosError } from "axios";
-import api from "./api";
-import iamService from "./iam";
+import api from "@/services/api";
+import iamService from "@/services/iam";
 import { toast } from "react-toastify";
 
 export type Student = {

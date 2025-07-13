@@ -5,9 +5,9 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "./ui/alert-dialog";
-import { Button } from "./ui/button";
-import { Input } from "./ui/input";
+} from "@/components/ui/alert-dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import {
   AlertDialogAction,
   AlertDialogDescription,
@@ -16,7 +16,6 @@ import { CirclePlay } from "lucide-react";
 import axios, { AxiosError } from "axios";
 import { useAuth } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
-// import { set } from "react-hook-form";
 
 export type PreSessionChecksSteps =
   | { type: "WELCOME" }
@@ -102,7 +101,7 @@ const AudioCuePlayButton = ({ cue }: { cue: string }) => {
         <CirclePlay />
         Play Sound
       </Button>
-      <audio ref={audioRef} src={`./${cue}.mp3`} preload="auto" />
+      <audio ref={audioRef} src={`/lsuadhd-frontend/${cue}.mp3`} preload="auto" />
     </div>
   );
 };
@@ -203,8 +202,8 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               <>
                 <AlertDialogTitle>Welcome</AlertDialogTitle>
                 <AlertDialogDescription>
-                  You will perform a series of checks to make sure everything is
-                  ready and set up for a smooth session.
+                    To ensure a smooth session, you will perform a series of setup checks. 
+                    <span className="text-yellow-500 font-bold"> Please read all instructions carefully.</span>
                 </AlertDialogDescription>
               </>
             )}
@@ -212,56 +211,60 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               <>
                 <AlertDialogTitle>Supporting apps</AlertDialogTitle>
                 <div className="flex flex-col gap-8">
-                  <div className="flex gap-4">
+                    <div className="flex gap-4">
+                        <AlertDialogDescription>
+                        The moment you double clicked on the "Open this first"
+                        shortcut on the desktop, you were supposed to see a
+                        command prompt, which looks like this:
+                        </AlertDialogDescription>
+                        <img
+                        width={"50%"}
+                        src="/lsuadhd-frontend/cmd.jpg"
+                        alt="Command prompt image"
+                        />
+                    </div>
                     <AlertDialogDescription>
-                      The moment you double clicked on the "Open this first"
-                      shortcut on the desktop, you were supposed to see a
-                      command prompt, which looks like this.
+                        It is an intermediary app that launches and runs in the
+                        background to take care of all communications between 
+                        the laptop, the browser, and our servers. Alongside
+                        it, the Personal Analytics app should be running in
+                        the background as well.
                     </AlertDialogDescription>
-                    <img
-                      width={"50%"}
-                      src="./cmd.jpg"
-                      alt="Command prompt image"
-                    />
-                  </div>
-                  <AlertDialogDescription>
-                    It is an intermediary app that launches and runs on the
-                    background to take care of any and all communications
-                    between the laptop, the browser, and our servers. Alongside
-                    it, the Personal Analytics app should also be running in
-                    the background.
-                  </AlertDialogDescription>
-                  {localServerIsWorking && (
+                    <AlertDialogDescription>
+                        <span className="text-yellow-500 font-bold">Please ensure both the server and app are running. </span> 
+                        Refer to the indicators below for guidance.
+                    </AlertDialogDescription>
+                    {localServerIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
-                      The local server appears to be online
+                        <span className="w-1 h-1 rounded-full bg-green-600"></span>
+                        The Local Server appears to be online
                     </AlertDialogDescription>
-                  )}
-                  {!localServerIsWorking && (
+                    )}
+                    {!localServerIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
-                      The local server appears to be offline
+                        <span className="w-1 h-1 rounded-full bg-red-600"></span>
+                        The Local Server appears to be offline
                     </AlertDialogDescription>
-                  )}
-                  {personalAnalyticsIsWorking && (
+                    )}
+                    {personalAnalyticsIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
-                      The Personal Analytics app appears to be online
+                        <span className="w-1 h-1 rounded-full bg-green-600"></span>
+                        The Personal Analytics app appears to be online
                     </AlertDialogDescription>
-                  )}
-                  {!personalAnalyticsIsWorking && (
+                    )}
+                    {!personalAnalyticsIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
-                      The Personal Analytics app appears to be offline.
+                        <span className="w-1 h-1 rounded-full bg-red-600"></span>
+                        The Personal Analytics app appears to be offline.
                     </AlertDialogDescription>
-                  )}
-                  {(!localServerIsWorking || !personalAnalyticsIsWorking) && (
+                    )}
+                    {(!localServerIsWorking || !personalAnalyticsIsWorking) && (
                     <AlertDialogDescription className="text-red-500">
-                      If the PersonalAnalytics app or the command prompt is currently running, 
-                      please close them. Then, double-click the desktop shortcut to restart the application.
-                      If the issue persists, contact Matheus at mcost16@lsu.edu for assistance.
+                        If the PersonalAnalytics app or the command prompt is currently running, 
+                        please close them. Then, double-click the desktop shortcut to restart the application.
+                        If the issue persists, contact Matheus at <strong>mcost16@lsu.edu</strong> for assistance.
                     </AlertDialogDescription>
-                  )}
+                    )}
                 </div>
               </>
             )}
@@ -273,15 +276,22 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                     Plug the headphones into the headset using the headphone jack on the right strap of the headset.
                   </AlertDialogDescription>
                   <AlertDialogDescription>
-                    Then, make sure you have the volume of the headset high enough. You can raise the volume using the volume buttons on the bottom right section of the headset.
+                    Then, make sure you have the volume of the headset high enough. 
+                    You can raise the volume using the buttons on the bottom 
+                    right section of the headset as shown in the image.
                   </AlertDialogDescription>
                   <div className="flex justify-center">
                     <img
                       width={"60%"}
-                      src="./headset-vol-buttons.jpg"
+                      src="/lsuadhd-frontend/headset-vol-buttons.jpg"
                       alt="volume buttons"
                     />
                   </div>
+                  <AlertDialogDescription>
+                    Please check the 'beep' noise to ensure it is set at a comfortable level. 
+                    <span className="text-yellow-500 font-bold"> This sound serves as
+                    feedback when distraction is detected during the session.</span>
+                  </AlertDialogDescription>
                 </div>
               </>
             )}
@@ -289,8 +299,8 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               <>
                 <AlertDialogTitle>Setting VR mode</AlertDialogTitle>
                 <AlertDialogDescription>
-                  On the Meta Workrooms app on the headset, make sure that the
-                  VR mode is set to passthrough and that you can see your
+                  On the Meta Workrooms app on the headset, <span className="text-yellow-500 font-bold">make sure that the
+                  VR mode is set to passthrough</span> and that you can see your
                   surroundings. If you see a virtual environment, please set to
                   passthrough before continuing.
                 </AlertDialogDescription>
@@ -298,9 +308,9 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
             )}
             {state.type === "AUDIO_CUE" && (
               <>
-                <AlertDialogTitle>Please enter the audio cue</AlertDialogTitle>
+                <AlertDialogTitle>Final Audio Check: Please enter the audio cue</AlertDialogTitle>
                 <AlertDialogDescription>
-                  Try to increase the volume to a comfortable level
+                  Please double check that your volume is set to a comfortable level.
                 </AlertDialogDescription>
               </>
             )}
@@ -359,7 +369,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                     disabled={isPinging}
                     onClick={() => {pingLocalServer(); pingPersonalAnalytics();}}
                   >
-                    {isPinging ? "Checking..." : "Verify again"}
+                    {isPinging ? "Checking..." : "Click to Verify Again"}
                   </Button>
                 </div>
                 <div

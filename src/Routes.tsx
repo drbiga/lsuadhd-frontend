@@ -3,7 +3,7 @@ import { RouterProvider, createBrowserRouter } from "react-router-dom"
 import Login from "./pages/Auth/Login";
 import { AuthRequired } from "./hooks/auth";
 import SignUp from "./pages/Auth/SignUp";
-import NextSession from "./pages/NextSession";
+import NextSession from "./pages/SessionExecution";
 import SessionProgress from "./pages/SessionProgress";
 
 export enum RouteNames {
@@ -12,10 +12,6 @@ export enum RouteNames {
     LOGIN = '/login',
     SIGNUP = '/signup',
     SESSION_PROGRESS = '/session-progress',
-    MANAGEMENT = '/management',
-    SESSION_GROUPS = '/session_groups',
-    INDIVIDUAL_SESSION_GROUP = '/session-group',
-    MANAGEMENT__STUDENTS = '/students'
 }
 
 export default function Routes() {

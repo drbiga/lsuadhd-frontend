@@ -10,7 +10,7 @@ import { useNavigate } from "react-router-dom";
 
 import iamService from "@/services/iam";
 import api from "@/services/api";
-import { getLocalStorage, Item, removeLocalStorage, setLocalStorage } from "@/localstorage";
+import { getLocalStorage, Item, removeLocalStorage, setLocalStorage } from "@/lib/localstorage";
 import { toast } from "react-toastify";
 import axios, { AxiosError } from "axios";
 
