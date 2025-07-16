@@ -18,7 +18,7 @@ export function SessionInfoDisplay({ session, sessionProgressData }: SessionInfo
         Stage: {sessionProgressData.stage}
       </div>
       <p className="text-sm text-slate-700 dark:text-slate-300">
-        Remaining time: {presentRemainingTime(sessionProgressData.remainingTimeSeconds)}
+        Remaining time: <span className="text-yellow-500 font-bold">{presentRemainingTime(sessionProgressData.remainingTimeSeconds)}</span>
       </p>
     </div>
   );

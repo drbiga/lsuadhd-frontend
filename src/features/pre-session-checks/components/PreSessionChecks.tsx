@@ -116,8 +116,10 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
   const audioCueAnswerRef = useRef(null);
   const [localServerIsWorking, setLocalServerIsWorking] = useState(false);
   const [personalAnalyticsIsWorking, setPersonalAnalyticsIsWorking] = useState(false);
+  const [feedbackSystemIsWorking, setFeedbackSystemIsWorking] = useState(false);
   const [isPingingLocal, setIsPingingLocal] = useState(false);
   const [isPingingPersonal, setIsPingingPersonal] = useState(false);
+  const [isPingingFeedback, setIsPingingFeedback] = useState(false);
   const [beepChecked, setBeepChecked] = useState(false);
 
   const { initializeLocalServer } = useAuth();
@@ -162,12 +164,33 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
     }
   }, []);
 
-  const isPinging = isPingingLocal || isPingingPersonal;
+  const pingFeedbackSystem = useCallback(async () => {
+    setIsPingingFeedback(true);
+    try {
+      const response = await axios.get("http://localhost:8080/health-check");
+      if (response.data) {
+        setFeedbackSystemIsWorking(true);
+      }
+    } catch (e: any) {
+      setFeedbackSystemIsWorking(false);
+      if (e instanceof AxiosError && e.code === "ERR_NETWORK") {
+        console.error("Network error:", e);
+      }
+      if (e.code === "ECONNREFUSED") {
+        console.error("Connection refused:", e);
+      }
+    } finally {
+      setIsPingingFeedback(false);
+    }
+  }, []);
+
+  const isPinging = isPingingLocal || isPingingPersonal || isPingingFeedback;
     
   useEffect(() => {
     pingLocalServer();
     pingPersonalAnalytics();
-  }, [pingLocalServer, pingPersonalAnalytics]);
+    pingFeedbackSystem();
+  }, [pingLocalServer, pingPersonalAnalytics, pingFeedbackSystem]);
 
 
   const handleCheckBeep = () => {
@@ -258,9 +281,21 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                         The Personal Analytics app appears to be offline.
                     </AlertDialogDescription>
                     )}
-                    {(!localServerIsWorking || !personalAnalyticsIsWorking) && (
+                    {feedbackSystemIsWorking && (
+                    <AlertDialogDescription className="flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-green-600"></span>
+                        The Feedback System appears to be online
+                    </AlertDialogDescription>
+                    )}
+                    {!feedbackSystemIsWorking && (
+                    <AlertDialogDescription className="flex items-center gap-1">
+                        <span className="w-1 h-1 rounded-full bg-red-600"></span>
+                        The Feedback System appears to be offline
+                    </AlertDialogDescription>
+                    )}
+                    {(!localServerIsWorking || !personalAnalyticsIsWorking || !feedbackSystemIsWorking) && (
                     <AlertDialogDescription className="text-red-500">
-                        If the PersonalAnalytics app or the command prompt is currently running, 
+                        If the PersonalAnalytics app, the command prompt, or the Feedback System is currently running, 
                         please close them. Then, double-click the desktop shortcut to restart the application.
                         If the issue persists, contact Matheus at <strong>mcost16@lsu.edu</strong> for assistance.
                     </AlertDialogDescription>
@@ -360,14 +395,14 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                     isPinging ? "hidden" : ""
                   )}
                 >
-                  {localServerIsWorking && personalAnalyticsIsWorking ? (
+                  {localServerIsWorking && personalAnalyticsIsWorking && feedbackSystemIsWorking ? (
                     <div className="w-2 h-2 rounded-full bg-green-600"></div>
                   ) : (
                     <div className="w-2 h-2 rounded-full bg-red-600"></div>
                   )}
                   <Button 
                     disabled={isPinging}
-                    onClick={() => {pingLocalServer(); pingPersonalAnalytics();}}
+                    onClick={() => {pingLocalServer(); pingPersonalAnalytics(); pingFeedbackSystem();}}
                   >
                     {isPinging ? "Checking..." : "Click to Verify Again"}
                   </Button>
@@ -379,7 +414,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                 </div>
                 <Button
                   variant={"outline"}
-                  disabled={!localServerIsWorking || !personalAnalyticsIsWorking}
+                  disabled={!localServerIsWorking || !personalAnalyticsIsWorking || !feedbackSystemIsWorking}
                   onClick={() => dispatch({ type: "NEXT" })}
                 >
                   Continue

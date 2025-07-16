@@ -58,13 +58,16 @@ export function ReadcompStage({ session, sessionProgressData, onStartHomework }:
           </WalkthroughInstructionsTitle>
           <WalkthroughInstructionsDescription>
             <div className="space-y-3">
-              <p>Your 10-minute reading comprehension session has ended.</p>
+              <p>
+                Your 10-minute reading comprehension session has ended.
+                <span className="text-yellow-500 font-bold"> Please refrain from continuing to work on the passage.</span>
+              </p>
               <p className="font-medium">
-                Before proceeding, please make sure you have:
+                At this point, make sure you:
               </p>
               <ol className="list-disc list-inside space-y-2 pl-2">
-                <li>Scrolled to the bottom of the survey</li>
-                <li>Clicked the <strong>Submit</strong> button to save your answers</li>
+                <li>Scroll to the bottom of the survey</li>
+                <li>Click the <strong className="text-yellow-500 font-bold">Submit</strong> button to save your answers</li>
               </ol>
             </div>
           </WalkthroughInstructionsDescription>
