@@ -38,7 +38,7 @@ export default function NextSession() {
     <PageContainer>
       <Sidebar ref={sidebarRef} />
       <div className="w-full h-full">
-        {!isRestoringSessionState && !sessionHasStarted && !completedPreSessionChecks && (
+        {!completedPreSessionChecks && (
           <div className="h-full flex flex-col justify-center items-center gap-4">
             <h2 className="text-xl">Welcome</h2>
             <p className="">
