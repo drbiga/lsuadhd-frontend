@@ -127,7 +127,6 @@ class SessionExecutionService {
             this.websocket = createWebSocket(studentName);
             this.websocket.addEventListener('message', (event) => {
                 const data = JSON.parse(event.data);
-                // console.log(data);
                 this.initiateTrackingUpload(data.stage, data.remaining_time);
                 updateCallback({
                     stage: data.stage,
@@ -156,6 +155,18 @@ class SessionExecutionService {
         await api.put(`/session_execution/student/${studentName}/session/homework`);
     }
 
+    public async finishSessionForStudent(studentName: string): Promise<Session> {
+        const response = await api.put(`/session_execution/student/${studentName}/session/finished`);
+
+        try {
+            await axios.post('http://localhost:8001/stop_collection');
+        } catch {
+            console.log('Could not stop data collection. The collection service might not be running');
+        }
+
+        return response.data;
+    }
+
     public async getSessionProgress(studentName: string): Promise<SessionProgressData> {
         const response = await api.get(`/session_execution/student/${studentName}/session`);
         return {
@@ -171,16 +182,16 @@ class SessionExecutionService {
     public setUpdateCallback(studentName: string, updateCallback: (sessionProgressData: SessionProgressData) => void) {
         if (this.websocket === null) {
             this.websocket = createWebSocket(studentName);
-        }
-        this.websocket.addEventListener('message', (event) => {
-            const data = JSON.parse(event.data);
-            console.log(data);
-            this.initiateTrackingUpload(data.stage, data.remaining_time);
-            updateCallback({
-                stage: data.stage,
-                remainingTimeSeconds: data.remaining_time
+            this.websocket.addEventListener('message', (event) => {
+                const data = JSON.parse(event.data);
+                console.log(data);
+                this.initiateTrackingUpload(data.stage, data.remaining_time);
+                updateCallback({
+                    stage: data.stage,
+                    remainingTimeSeconds: data.remaining_time
+                });
             });
-        });
+        }
     }
 
     private initiateTrackingUpload(stage: Stage, remainingTimeSeconds: number) {
@@ -197,8 +208,7 @@ class SessionExecutionService {
 
 function createWebSocket(studentName: string): WebSocket {
     const session = iamService.getCurrentSession();
-    const socket = new WebSocket(`${import.meta.env.VITE_WEBSOCKET_PROTOCOL || "https"}://${import.meta.env.VITE_BACKEND_HOST}:${import.meta.env.VITE_BACKEND_PORT}/session_execution/student/${studentName}/session/observer?token=${session.token}`); // Replace with your actual WebSocket URL
-    // const socket = new WebSocket(`https://${import.meta.env.VITE_BACKEND_HOST}:${import.meta.env.VITE_BACKEND_PORT}/session_execution/student/${studentName}/session/observer?token=${session.token}`); // Replace with your actual WebSocket URL
+    const socket = new WebSocket(`${import.meta.env.VITE_WEBSOCKET_PROTOCOL || "wss"}://${import.meta.env.VITE_BACKEND_HOST}:${import.meta.env.VITE_BACKEND_PORT}/session_execution/student/${studentName}/session/observer?token=${session.token}`);
 
     socket.onopen = () => {
         console.log('WebSocket connection established.');
@@ -213,7 +223,7 @@ function createWebSocket(studentName: string): WebSocket {
     };
 
     socket.onerror = (error) => {
-        console.error(`WebSocket error: ${error}`);
+        console.error(`WebSocket error:`, error);
     };
 
     return socket;

@@ -1,6 +1,7 @@
 import { Session, SessionProgressData } from "@/features/session-execution/services/sessionExecutionService";
 import { presentRemainingTime } from "@/features/session-execution/lib/timeUtils";
 import { Walkthrough, WalkthroughInstructionsDescription, WalkthroughInstructionsTitle } from "@/features/session-execution/components/Walkthrough";
+import { useEffect } from "react";
 
 interface HomeworkStageProps {
   session: Session;
@@ -8,6 +9,15 @@ interface HomeworkStageProps {
 }
 
 export function HomeworkStage({ session, sessionProgressData }: HomeworkStageProps) {
+  useEffect(() => {
+    const originalTitle = document.title;
+    document.title = `${presentRemainingTime(sessionProgressData.remainingTimeSeconds)} - Homework Time`;
+    
+    return () => {
+      document.title = originalTitle;
+    };
+  }, [sessionProgressData.remainingTimeSeconds]);
+
   return (
     <>
       {sessionProgressData.remainingTimeSeconds > 5 ? (

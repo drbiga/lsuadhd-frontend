@@ -1,4 +1,5 @@
 import { PageContainer, PageMainContent, PageTitle } from "@/components/layout/Page";
+import { LoadingScreen } from "@/components/common/LoadingScreen";
 import Sidebar from "@/components/layout/Sidebar";
 import { CompletedSessionsList } from "@/features/session-progress/components/CompletedSessionsList";
 import { RemainingSessionsList } from "@/features/session-progress/components/RemainingSessionsList";
@@ -13,9 +14,7 @@ export default function SessionProgress() {
         <Sidebar />
         <PageMainContent>
           <PageTitle>Session Progress</PageTitle>
-          <div className="flex items-center justify-center p-8">
-            <div className="text-xl">Loading session progress data...</div>
-          </div>
+          <LoadingScreen message="Loading session progress data..." />
         </PageMainContent>
       </PageContainer>
     );

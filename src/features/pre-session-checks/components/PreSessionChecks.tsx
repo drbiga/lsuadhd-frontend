@@ -219,7 +219,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
           }
         }}
       >
-        <AlertDialogContent>
+        <AlertDialogContent className="max-h-[90vh] overflow-y-auto">
           <AlertDialogHeader>
             {state.type === "WELCOME" && (
               <>

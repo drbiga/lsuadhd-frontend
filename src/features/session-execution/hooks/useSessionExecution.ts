@@ -1,6 +1,6 @@
 import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/auth";
-import sessionExecutionService, { Session, SessionProgressData } from "@/features/session-execution/services/sessionExecutionService";
+import sessionExecutionService, { Session, SessionProgressData, Stage } from "@/features/session-execution/services/sessionExecutionService";
 import { toast } from "react-toastify";
 
 export function useSessionExecution() {
@@ -9,7 +9,6 @@ export function useSessionExecution() {
     const [sessionHasStarted, setSessionHasStarted] = useState<boolean>(false);
     const [sessionProgressData, setSessionProgressData] = useState<SessionProgressData | null>(null);
     const [hasNextSession, setHasNextSession] = useState<number>(-1); // -1: loading, 0: no, 1: yes
-    const [isRestoringSessionState, setIsRestoringSessionState] = useState<boolean>(true); // to address page reload/close
 
     const { authState } = useAuth();
 
@@ -62,6 +61,28 @@ export function useSessionExecution() {
         }
     }, [authState.session?.user.username]);
 
+    const finishSession = useCallback(async () => {
+        if (!authState.session?.user.username) return;
+
+        try {
+            const updatedSession = await sessionExecutionService.finishSessionForStudent(authState.session.user.username);
+
+            if (sessionProgressData) {
+                setSessionProgressData({
+                    ...sessionProgressData,
+                    stage: Stage.FINISHED
+                });
+            }
+
+            setNextSession(updatedSession);
+
+            toast.success("Session finished");
+        } catch (error) {
+            console.error("Error finishing session:", error);
+            toast.error("Failed to finish session");
+        }
+    }, [authState.session?.user.username, sessionProgressData]);
+
     useEffect(() => {
         fetchNextSession();
     }, [fetchNextSession]);
@@ -89,11 +110,7 @@ export function useSessionExecution() {
                     }
                 } catch (error) {
                     console.error("Error getting session state:", error);
-                } finally {
-                    setIsRestoringSessionState(false);
                 }
-            } else {
-                setIsRestoringSessionState(false);
             }
         })();
     }, [authState.session?.user.username]);
@@ -116,6 +133,6 @@ export function useSessionExecution() {
         startSession,
         startHomework,
         fetchNextSession,
-        isRestoringSessionState,
+        finishSession,
     };
 }

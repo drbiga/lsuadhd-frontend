@@ -137,7 +137,7 @@ export function ReadcompStage({ session, sessionProgressData, onStartHomework }:
             variant="default"
             className="bg-slate-700 text-sm"
           >
-            Click to return to survey submission confirmation
+            Return to submission confirmation
           </Button>
         </div>
       )}

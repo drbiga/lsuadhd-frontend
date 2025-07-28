@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { PageContainer, PageTitle } from "@/components/layout/Page";
+import { PageContainer, PageMainContent, PageTitle } from "@/components/layout/Page";
 import { PreSessionChecks } from "@/features/pre-session-checks/components/PreSessionChecks";
 import { SessionInfoDisplay } from "@/features/session-execution/components/SessionInfoDisplay";
 import { SessionStartScreen } from "@/features/session-execution/components/SessionStartScreen";
@@ -8,6 +8,7 @@ import { HomeworkStage } from "@/features/session-execution/components/HomeworkS
 import { SurveyStage } from "@/features/session-execution/components/SurveyStage";
 import { FinishedStage } from "@/features/session-execution/components/FinishedStage";
 import Sidebar, { SidebarHandle } from "@/components/layout/Sidebar";
+import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { useSessionExecution } from "@/features/session-execution/hooks/useSessionExecution";
 import { usePreSessionChecks } from "@/features/pre-session-checks/hooks/usePreSessionChecks";
 import { Stage } from "@/features/session-execution/services/sessionExecutionService";
@@ -21,7 +22,7 @@ export default function NextSession() {
     hasNextSession,
     startSession,
     startHomework,
-    isRestoringSessionState
+    finishSession
   } = useSessionExecution();
   
   const { 
@@ -34,11 +35,23 @@ export default function NextSession() {
     sidebarRef.current?.autoCollapse();
   };
 
+  if (hasNextSession === -1 && (sessionHasStarted || !sessionProgressData)) {
+    return (
+      <PageContainer>
+        <Sidebar ref={sidebarRef} />
+        <PageMainContent>
+          <PageTitle>Next Session</PageTitle>
+          <LoadingScreen />
+        </PageMainContent>
+      </PageContainer>
+    );
+  }
+
   return (
     <PageContainer>
       <Sidebar ref={sidebarRef} />
       <div className="w-full h-full">
-        {!completedPreSessionChecks && (
+        {!completedPreSessionChecks && hasNextSession !== 0 && !sessionHasStarted && (
           <div className="h-full flex flex-col justify-center items-center gap-4">
             <h2 className="text-xl">Welcome</h2>
             <p className="">
@@ -51,7 +64,7 @@ export default function NextSession() {
           </div>
         )}
 
-        {!isRestoringSessionState && completedPreSessionChecks && !sessionHasStarted && hasNextSession === 1 && nextSession && (
+        {completedPreSessionChecks && !sessionHasStarted && hasNextSession === 1 && nextSession && (
           <SessionStartScreen 
             session={nextSession}
             onStartSession={handleStartSession}
@@ -93,23 +106,27 @@ export default function NextSession() {
             )}
             
             {sessionProgressData.stage === Stage.SURVEY && (
-              <SurveyStage session={nextSession} />
+              <SurveyStage 
+                session={nextSession} 
+                sessionProgressData={sessionProgressData}
+                onFinishSession={finishSession}
+              />
             )}
             
             {sessionProgressData.stage === Stage.FINISHED && (
               <FinishedStage session={nextSession} />
             )}
+            
+            {!sessionHasStarted && hasNextSession === 0 && (
+              <div className="pl-16 pt-8">
+                <h2 className="text-3xl mb-8">Congratulations!</h2>
+                <p>
+                  It appears that you do not have any sessions left. Well done!
+                  You've done them all!!!
+                </p>
+              </div>
+            )}
           </>
-        )}
-
-        {!sessionHasStarted && hasNextSession === 0 && (
-          <div className="pl-16 pt-8">
-            <h2 className="text-3xl mb-8">Congratulations!</h2>
-            <p>
-              It appears that you do not have any sessions left. Well done!
-              You've done them all!!!
-            </p>
-          </div>
         )}
       </div>
     </PageContainer>
