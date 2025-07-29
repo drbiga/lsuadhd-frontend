@@ -2,6 +2,15 @@ import { useState, useCallback, useEffect } from "react";
 import { useAuth } from "@/hooks/auth";
 import sessionExecutionService, { Session, SessionProgressData, Stage } from "@/features/session-execution/services/sessionExecutionService";
 import { toast } from "react-toastify";
+import { getLocalStorage, setLocalStorage, removeLocalStorage, Item } from "@/lib/localstorage";
+
+interface CachedSessionData {
+    nextSession: Session | null;
+    remainingSessions: Session[];
+    sessionHasStarted: boolean;
+    stage: Stage | null;
+    hasNextSession: number;
+}
 
 export function useSessionExecution() {
     const [nextSession, setNextSession] = useState<Session | null>(null);
@@ -11,6 +20,39 @@ export function useSessionExecution() {
     const [hasNextSession, setHasNextSession] = useState<number>(-1); // -1: loading, 0: no, 1: yes
 
     const { authState } = useAuth();
+
+    useEffect(() => {
+        const cachedData = getLocalStorage(Item.SESSION_EXECUTION_CACHE);
+        if (cachedData) {
+            try {
+                const parsed: CachedSessionData = JSON.parse(cachedData);
+                setNextSession(parsed.nextSession);
+                setRemainingSessions(parsed.remainingSessions);
+                setSessionHasStarted(parsed.sessionHasStarted);
+                setHasNextSession(parsed.hasNextSession);
+            } catch (error) {
+                console.error("Error parsing cached session data:", error);
+                removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
+            }
+        }
+    }, []);
+
+    const saveToLocalStorage = useCallback((
+        nextSession: Session | null,
+        remainingSessions: Session[],
+        sessionHasStarted: boolean,
+        stage: Stage | null,
+        hasNextSession: number
+    ) => {
+        const stateToCache: CachedSessionData = {
+            nextSession,
+            remainingSessions,
+            sessionHasStarted,
+            stage,
+            hasNextSession
+        };
+        setLocalStorage(Item.SESSION_EXECUTION_CACHE, JSON.stringify(stateToCache));
+    }, []);
 
     const fetchNextSession = useCallback(async () => {
         if (!authState.session?.user.username) return;
@@ -24,14 +66,17 @@ export function useSessionExecution() {
             if (sessions.length > 0) {
                 setNextSession(sessions[0]);
                 setHasNextSession(1);
+                saveToLocalStorage(sessions[0], sessions, false, null, 1);
             } else {
                 setHasNextSession(0);
+                saveToLocalStorage(null, sessions, false, null, 0);
             }
         } catch (error) {
             console.error("Error fetching next session:", error);
             setHasNextSession(0);
+            saveToLocalStorage(null, [], false, null, 0);
         }
-    }, [authState.session?.user.username]);
+    }, [authState.session?.user.username, saveToLocalStorage]);
 
     const startSession = useCallback(async () => {
         if (!authState.session?.user.username || !nextSession) return;
@@ -39,15 +84,19 @@ export function useSessionExecution() {
         try {
             await sessionExecutionService.startSessionForStudent(
                 authState.session.user.username,
-                setSessionProgressData
+                (progressData) => {
+                    setSessionProgressData(progressData);
+                    saveToLocalStorage(nextSession, [], true, progressData.stage, 1);
+                }
             );
             setSessionHasStarted(true);
+            saveToLocalStorage(nextSession, [], true, null, 1);
             toast.success("Session started successfully");
         } catch (error) {
             console.error("Error starting session:", error);
             toast.error("Failed to start session");
         }
-    }, [authState.session?.user.username, nextSession]);
+    }, [authState.session?.user.username, nextSession, saveToLocalStorage]);
 
     const startHomework = useCallback(async () => {
         if (!authState.session?.user.username) return;
@@ -68,13 +117,17 @@ export function useSessionExecution() {
             const updatedSession = await sessionExecutionService.finishSessionForStudent(authState.session.user.username);
 
             if (sessionProgressData) {
-                setSessionProgressData({
+                const updatedProgressData = {
                     ...sessionProgressData,
                     stage: Stage.FINISHED
-                });
+                };
+                setSessionProgressData(updatedProgressData);
             }
 
             setNextSession(updatedSession);
+            setSessionHasStarted(false);
+
+            removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
 
             toast.success("Session finished");
         } catch (error) {
@@ -100,29 +153,25 @@ export function useSessionExecution() {
 
                         sessionExecutionService.setUpdateCallback(
                             student.name,
-                            setSessionProgressData
+                            (progressData) => {
+                                setSessionProgressData(progressData);
+                                saveToLocalStorage(student.active_session, [], true, progressData.stage, 1);
+                            }
                         );
 
                         const progress = await sessionExecutionService.getSessionProgress(
                             authState.session.user.username
                         );
                         setSessionProgressData(progress);
+
+                        saveToLocalStorage(student.active_session, [], true, progress.stage, 1);
                     }
                 } catch (error) {
                     console.error("Error getting session state:", error);
                 }
             }
         })();
-    }, [authState.session?.user.username]);
-
-    useEffect(() => {
-        if (sessionHasStarted && authState.session?.user.username) {
-            sessionExecutionService.setUpdateCallback(
-                authState.session.user.username,
-                setSessionProgressData
-            );
-        }
-    }, [sessionHasStarted, authState.session?.user.username]);
+    }, [authState.session?.user.username, saveToLocalStorage]);
 
     return {
         nextSession,

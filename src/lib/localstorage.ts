@@ -1,6 +1,7 @@
 export enum Item {
     // SESSION_TOKEN = 'ADHD::SessionToken',
-    SESSION_OBJ = 'ADHD::Session'
+    SESSION_OBJ = 'ADHD::Session',
+    SESSION_EXECUTION_CACHE = 'ADHD::SessionExecutionCache'
 }
 
 export function getLocalStorage(item: Item): string | null {

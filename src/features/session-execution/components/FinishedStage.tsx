@@ -39,7 +39,7 @@ export function FinishedStage({ session }: FinishedStageProps) {
         <p>
           At this point, you should{" "}
           <span className="text-yellow-500 font-bold">
-            turn off the laptop
+            shut down the laptop
             {!session?.no_equipment && <span> and the headset</span>}
           </span>
         </p>

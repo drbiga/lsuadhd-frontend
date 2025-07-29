@@ -19,7 +19,7 @@ export default function Login() {
 
   useEffect(() => {
     if (authState.isLoggedIn) {
-      navigate('/')
+      navigate('/lsuadhd-frontend/')
     }
   }, [authState])
 

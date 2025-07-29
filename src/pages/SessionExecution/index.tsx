@@ -35,7 +35,7 @@ export default function NextSession() {
     sidebarRef.current?.autoCollapse();
   };
 
-  if (hasNextSession === -1 && (sessionHasStarted || !sessionProgressData)) {
+  if (hasNextSession === -1) {
     return (
       <PageContainer>
         <Sidebar ref={sidebarRef} />
@@ -116,8 +116,9 @@ export default function NextSession() {
             {sessionProgressData.stage === Stage.FINISHED && (
               <FinishedStage session={nextSession} />
             )}
-            
-            {!sessionHasStarted && hasNextSession === 0 && (
+          </>
+        )}
+        {!sessionHasStarted && hasNextSession === 0 && (
               <div className="pl-16 pt-8">
                 <h2 className="text-3xl mb-8">Congratulations!</h2>
                 <p>
@@ -125,8 +126,6 @@ export default function NextSession() {
                   You've done them all!!!
                 </p>
               </div>
-            )}
-          </>
         )}
       </div>
     </PageContainer>
