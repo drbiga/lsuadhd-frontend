@@ -20,6 +20,7 @@ export default function NextSession() {
     sessionHasStarted, 
     sessionProgressData, 
     hasNextSession,
+    sessionHasEquipment,
     startSession,
     startHomework,
     finishSession
@@ -52,13 +53,16 @@ export default function NextSession() {
       <Sidebar ref={sidebarRef} />
       <div className="w-full h-full">
         {!completedPreSessionChecks && hasNextSession !== 0 && !sessionHasStarted && (
-          <div className="h-full flex flex-col justify-center items-center gap-4">
-            <h2 className="text-xl">Welcome</h2>
-            <p className="">
-              You are about to go through some pre-session checks. Please press
-              begin
+          <div className="h-full flex flex-col justify-center items-center">
+            <h2 className="text-3xl font-bold mb-1">Welcome</h2>
+            <p className="text-sm text-gray-600 mt-1">
+              <span className="font-medium">Up Next:</span> <span className="text-yellow-500 font-semibold">Session {nextSession?.seqnum}</span>
+            </p>
+            <p className="text-center m-4">
+              You are about to go through some pre-session checks. Please press begin.
             </p>
             <PreSessionChecks
+              session={nextSession}
               completedCallback={() => setCompletedPreSessionChecks(true)}
             />
           </div>
@@ -114,16 +118,18 @@ export default function NextSession() {
             )}
             
             {sessionProgressData.stage === Stage.FINISHED && (
-              <FinishedStage session={nextSession} />
+              <FinishedStage 
+                hasEquipment={sessionHasEquipment} 
+              />
             )}
           </>
         )}
         {!sessionHasStarted && hasNextSession === 0 && (
               <div className="pl-16 pt-8">
-                <h2 className="text-3xl mb-8">Congratulations!</h2>
+                <h2 className="text-3xl mb-8 font-bold">Congratulations! <span className="animate-bounce inline-block">🎉</span></h2>
                 <p>
                   It appears that you do not have any sessions left. Well done!
-                  You've done them all!!!
+                  You've completed them all!
                 </p>
               </div>
         )}

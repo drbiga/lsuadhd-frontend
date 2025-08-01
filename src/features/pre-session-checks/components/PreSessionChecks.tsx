@@ -16,10 +16,11 @@ import { CirclePlay } from "lucide-react";
 import axios, { AxiosError } from "axios";
 import { useAuth } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
+import { Session } from "@/features/session-execution/services/sessionExecutionService";
 
 export type PreSessionChecksSteps =
   | { type: "WELCOME" }
-  | { type: "LOCAL_SERVER" }
+  | { type: "SUPPORTING_APPS" }
   | { type: "HEADPHONE_CHECK" }
   | { type: "VR_MODE_PASSTHROUGH" }
   | { type: "AUDIO_CUE"; answer: string; cue: string; error?: string }
@@ -35,7 +36,8 @@ export type Action =
 
 export function checksReducer(
   state: PreSessionChecksSteps,
-  action: Action
+  action: Action,
+  session: Session | null = null
 ): PreSessionChecksSteps {
   const availableCues = ["dog", "ice cream", "laboratory"];
 
@@ -47,13 +49,25 @@ export function checksReducer(
 
   switch (state.type) {
     case "WELCOME":
-      if (action.type === "NEXT") return { type: "LOCAL_SERVER" };
+      if (action.type === "NEXT") return { type: "SUPPORTING_APPS" };
       break;
-    case "LOCAL_SERVER":
-      if (action.type === "NEXT") return { type: "HEADPHONE_CHECK" };
+    case "SUPPORTING_APPS":
+      if (action.type === "NEXT") { 
+        if (session?.no_equipment || (session?.seqnum ?? 0) <= 2) {
+          return { type: "CONFIRMATION" };
+        }
+        return { type: "HEADPHONE_CHECK" };
+      }
       break;
     case "HEADPHONE_CHECK":
-      if (action.type === "NEXT") return { type: "VR_MODE_PASSTHROUGH" };
+      if (action.type === "NEXT") {
+        if (!session?.is_passthrough) {
+          const firstCue =
+            availableCues[Math.floor(Math.random() * availableCues.length)];
+          return { type: "AUDIO_CUE", answer: "", cue: firstCue };
+        }
+        return { type: "VR_MODE_PASSTHROUGH" };
+      }
       break;
     case "VR_MODE_PASSTHROUGH":
       if (action.type === "NEXT") {
@@ -108,10 +122,14 @@ const AudioCuePlayButton = ({ cue }: { cue: string }) => {
 
 export type PreSessionChecksProps = {
   completedCallback: () => void;
+  session: Session | null;
 };
 
-export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
-  const [state, dispatch] = useReducer(checksReducer, { type: "WELCOME" });
+export function PreSessionChecks({ completedCallback, session }: PreSessionChecksProps) {
+  const [state, dispatch] = useReducer(
+    (state: PreSessionChecksSteps, action: Action) => checksReducer(state, action, session), 
+    { type: "WELCOME" }
+  );
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const audioCueAnswerRef = useRef(null);
   const [localServerIsWorking, setLocalServerIsWorking] = useState(false);
@@ -184,18 +202,24 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
     }
   }, []);
 
-  const isPinging = isPingingLocal || isPingingPersonal || isPingingFeedback;
+  const isPinging = isPingingLocal || isPingingPersonal || (session?.has_feedback ? isPingingFeedback : false);
     
   useEffect(() => {
     pingLocalServer();
     pingPersonalAnalytics();
-    pingFeedbackSystem();
-  }, [pingLocalServer, pingPersonalAnalytics, pingFeedbackSystem]);
+    if (session?.has_feedback) {
+      pingFeedbackSystem();
+    } else {
+      setFeedbackSystemIsWorking(true);
+    }
+  }, [pingLocalServer, pingPersonalAnalytics, pingFeedbackSystem, session]);
 
 
   const handleCheckBeep = () => {
     try {
-      axios.get('http://localhost:8080/play-beep')
+      if (session?.has_feedback) {
+        axios.get('http://localhost:8080/play-beep');
+      }
     } catch (error) {
     } finally {
       setBeepChecked(true);
@@ -206,7 +230,15 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
     <>
       <Button
         className="bg-neutral-200 text-neutral-800"
-        onClick={() => setDialogIsOpen(true)}
+        onClick={() => {
+          // If a tab has the autoclose parameter to mark a session as moved, 
+          // they get redirected to base path before beginning a new session to prevent issues
+          if (new URLSearchParams(window.location.search).get('autoclose') === 'true') {
+            window.location.href = window.location.origin + window.location.pathname;
+            return;
+          }
+          setDialogIsOpen(true);
+        }}
       >
         Begin
       </Button>
@@ -225,12 +257,12 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               <>
                 <AlertDialogTitle>Welcome</AlertDialogTitle>
                 <AlertDialogDescription>
-                    To ensure a smooth session, you will perform a series of setup checks. 
+                    To ensure a smooth session, you will perform setup checks. 
                     <span className="text-yellow-500 font-bold"> Please read all instructions carefully.</span>
                 </AlertDialogDescription>
               </>
             )}
-            {state.type === "LOCAL_SERVER" && (
+            {state.type === "SUPPORTING_APPS" && (
               <>
                 <AlertDialogTitle>Supporting apps</AlertDialogTitle>
                 <div className="flex flex-col gap-8">
@@ -254,7 +286,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                         the background as well.
                     </AlertDialogDescription>
                     <AlertDialogDescription>
-                        <span className="text-yellow-500 font-bold">Please ensure both the server and app are running. </span> 
+                        <span className="text-yellow-500 font-bold">Please ensure {session?.has_feedback ? 'all systems' : 'both the server and app'} are running. </span> 
                         Refer to the indicators below for guidance.
                     </AlertDialogDescription>
                     {localServerIsWorking && (
@@ -281,23 +313,23 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                         The Personal Analytics app appears to be offline.
                     </AlertDialogDescription>
                     )}
-                    {feedbackSystemIsWorking && (
+                    {session?.has_feedback && feedbackSystemIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
                         <span className="w-1 h-1 rounded-full bg-green-600"></span>
-                        The Feedback System appears to be online
+                        The Stoplight Feedback System appears to be online
                     </AlertDialogDescription>
                     )}
-                    {!feedbackSystemIsWorking && (
+                    {session?.has_feedback && !feedbackSystemIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
                         <span className="w-1 h-1 rounded-full bg-red-600"></span>
-                        The Feedback System appears to be offline
+                        The Stoplight Feedback System appears to be offline
                     </AlertDialogDescription>
                     )}
-                    {(!localServerIsWorking || !personalAnalyticsIsWorking || !feedbackSystemIsWorking) && (
+                    {(!localServerIsWorking || !personalAnalyticsIsWorking || (session?.has_feedback && !feedbackSystemIsWorking)) && (
                     <AlertDialogDescription className="text-red-500">
-                        If the PersonalAnalytics app, the command prompt, or the Feedback System is currently running, 
-                        please close them. Then, double-click the desktop shortcut to restart the application.
-                        If the issue persists, contact Matheus at <strong>mcost16@lsu.edu</strong> for assistance.
+                        If the PersonalAnalytics app, the command prompt{session?.has_feedback ? ', or the Stoplight Feedback System' : ''} {session?.has_feedback ? 'are' : 'is'} currently running, 
+                        please close them. Then, attempt to re-run the applications until the indicators each display online status.
+                        If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
                     </AlertDialogDescription>
                     )}
                 </div>
@@ -332,7 +364,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
             )}
             {state.type === "VR_MODE_PASSTHROUGH" && (
               <>
-                <AlertDialogTitle>Setting VR mode</AlertDialogTitle>
+                <AlertDialogTitle>Setting VR mode to Passthrough</AlertDialogTitle>
                 <AlertDialogDescription>
                   On the Meta Workrooms app on the headset, <span className="text-yellow-500 font-bold">make sure that the
                   VR mode is set to passthrough</span> and that you can see your
@@ -387,7 +419,7 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
               </Button>
             )}
 
-            {state.type === "LOCAL_SERVER" && (
+            {state.type === "SUPPORTING_APPS" && (
               <>
                 <div
                   className={cn(
@@ -395,14 +427,20 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                     isPinging ? "hidden" : ""
                   )}
                 >
-                  {localServerIsWorking && personalAnalyticsIsWorking && feedbackSystemIsWorking ? (
+                  {(localServerIsWorking && personalAnalyticsIsWorking && (!session?.has_feedback || feedbackSystemIsWorking)) ? (
                     <div className="w-2 h-2 rounded-full bg-green-600"></div>
                   ) : (
                     <div className="w-2 h-2 rounded-full bg-red-600"></div>
                   )}
                   <Button 
                     disabled={isPinging}
-                    onClick={() => {pingLocalServer(); pingPersonalAnalytics(); pingFeedbackSystem();}}
+                    onClick={() => {
+                      pingLocalServer(); 
+                      pingPersonalAnalytics(); 
+                      if (session?.has_feedback) {
+                        pingFeedbackSystem();
+                      }
+                    }}
                   >
                     {isPinging ? "Checking..." : "Click to Verify Again"}
                   </Button>
@@ -414,7 +452,11 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                 </div>
                 <Button
                   variant={"outline"}
-                  disabled={!localServerIsWorking || !personalAnalyticsIsWorking || !feedbackSystemIsWorking}
+                  disabled={
+                    !localServerIsWorking || 
+                    !personalAnalyticsIsWorking || 
+                    (session?.has_feedback && !feedbackSystemIsWorking)
+                  }
                   onClick={() => dispatch({ type: "NEXT" })}
                 >
                   Continue
@@ -427,16 +469,18 @@ export function PreSessionChecks({ completedCallback }: PreSessionChecksProps) {
                 <Button
                   variant={"outline"}
                   onClick={() => dispatch({ type: "NEXT" })}
-                  disabled={!beepChecked}
+                  disabled={session?.has_feedback && !beepChecked}
                 >
                   Continue
                 </Button>
-                <Button
-                  variant="outline"
-                  onClick={handleCheckBeep}
-                >
-                  Check Beep
-                </Button>
+                {session?.has_feedback && (
+                  <Button
+                    variant="outline"
+                    onClick={handleCheckBeep}
+                  >
+                    Check Beep
+                  </Button>
+                )}
               </>
             )}
 

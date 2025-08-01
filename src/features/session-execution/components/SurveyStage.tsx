@@ -31,7 +31,7 @@ export function SurveyStage({ session, sessionProgressData, onFinishSession }: S
 
   return (
     <>
-      {sessionProgressData.remainingTimeSeconds > 5 && (
+      {sessionProgressData.remainingTimeSeconds > 0 && (
         <Walkthrough>
           <WalkthroughInstructionsTitle>
             Survey
@@ -42,7 +42,7 @@ export function SurveyStage({ session, sessionProgressData, onFinishSession }: S
         </Walkthrough>
       )}
       
-      {sessionProgressData.remainingTimeSeconds <= 5 && (
+      {sessionProgressData.remainingTimeSeconds <= 0 && (
         <Walkthrough
           onClose={() => {
             setTimeout(() => {

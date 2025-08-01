@@ -39,8 +39,10 @@ export function Walkthrough({ children, onClose }: WalkthroughProps) {
 
 export function WalkthroughInstructionsDescription({ children }: PropsWithChildren) {
   return (
-    <AlertDialogDescription className="flex flex-col gap-2">
-      {children}
+    <AlertDialogDescription asChild>
+      <div className="text-sm text-muted-foreground flex flex-col gap-2">
+        {children}
+      </div>
     </AlertDialogDescription>
   );
 }

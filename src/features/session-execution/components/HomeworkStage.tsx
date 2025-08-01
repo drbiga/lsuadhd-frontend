@@ -28,7 +28,7 @@ export function HomeworkStage({ session, sessionProgressData }: HomeworkStagePro
             </WalkthroughInstructionsTitle>
             <WalkthroughInstructionsDescription>
               <p>
-                <strong>REMINDER: </strong>
+                <strong className="text-yellow-500">REMINDER: </strong>
                 Homework sessions must involve active work that
                 involves typing. This means that you are using active
                 studying techniques while reading (taking notes,
@@ -39,10 +39,10 @@ export function HomeworkStage({ session, sessionProgressData }: HomeworkStagePro
                 reach out to study coordinator, Sophia, at
                 sf924@gsapp.rutgers.edu
               </p>
-              <p>
-                Depending you the group you were assigned to, you may
-                receive feedback through a stop light to indicate how
-                well you are performing
+              <p className="font-bold text-yellow-500">
+                {session.has_feedback 
+                  ? "You will receive feedback through a stoplight indicator and audio beep to indicate how well you are performing during this session."
+                  : "You will not receive feedback to indicte how well you are performing during this session. Complete your work as usual."}
               </p>
             </WalkthroughInstructionsDescription>
           </Walkthrough>

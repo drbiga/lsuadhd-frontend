@@ -1,4 +1,3 @@
-import { Session } from "@/features/session-execution/services/sessionExecutionService";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -8,13 +7,13 @@ import {
 } from "@/components/ui/alert-dialog";
 
 interface FinishedStageProps {
-  session: Session;
+  hasEquipment?: boolean;
 }
 
-export function FinishedStage({ session }: FinishedStageProps) {
+export function FinishedStage({ hasEquipment }: FinishedStageProps) {
   return (
     <>
-      {session && !session.no_equipment && (
+      {hasEquipment && (
         <AlertDialog defaultOpen>
           <AlertDialogContent>
             <AlertDialogHeader>
@@ -39,8 +38,8 @@ export function FinishedStage({ session }: FinishedStageProps) {
         <p>
           At this point, you should{" "}
           <span className="text-yellow-500 font-bold">
-            shut down the laptop
-            {!session?.no_equipment && <span> and the headset</span>}
+            close this tab and then shut down the laptop
+            {hasEquipment && <span> as well as the headset</span>}
           </span>
         </p>
       </div>

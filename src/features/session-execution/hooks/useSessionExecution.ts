@@ -12,12 +12,19 @@ interface CachedSessionData {
     hasNextSession: number;
 }
 
+function isTabMoved(): boolean {
+    const isAutoCloseTab = new URLSearchParams(window.location.search).get('autoclose') === 'true';
+    const tabId = sessionStorage.getItem('tabId');
+    return !isAutoCloseTab && !!tabId && localStorage.getItem(`tab-moved-${tabId}`) === 'true';
+}
+
 export function useSessionExecution() {
     const [nextSession, setNextSession] = useState<Session | null>(null);
     const [remainingSessions, setRemainingSessions] = useState<Session[]>([]);
     const [sessionHasStarted, setSessionHasStarted] = useState<boolean>(false);
     const [sessionProgressData, setSessionProgressData] = useState<SessionProgressData | null>(null);
     const [hasNextSession, setHasNextSession] = useState<number>(-1); // -1: loading, 0: no, 1: yes
+    const [sessionHasEquipment, setSessionHasEquipment] = useState<boolean>(false);
 
     const { authState } = useAuth();
 
@@ -55,7 +62,7 @@ export function useSessionExecution() {
     }, []);
 
     const fetchNextSession = useCallback(async () => {
-        if (!authState.session?.user.username) return;
+        if (!authState.session?.user.username || isTabMoved()) return;
 
         try {
             const sessions = await sessionExecutionService.getRemainingSessionsForStudent(
@@ -65,6 +72,7 @@ export function useSessionExecution() {
 
             if (sessions.length > 0) {
                 setNextSession(sessions[0]);
+                setSessionHasEquipment(!sessions[0].no_equipment);
                 setHasNextSession(1);
                 saveToLocalStorage(sessions[0], sessions, false, null, 1);
             } else {
@@ -79,7 +87,9 @@ export function useSessionExecution() {
     }, [authState.session?.user.username, saveToLocalStorage]);
 
     const startSession = useCallback(async () => {
-        if (!authState.session?.user.username || !nextSession) return;
+        if (!authState.session?.user.username || !nextSession || isTabMoved()) return;
+
+        setSessionHasEquipment(nextSession && !nextSession.no_equipment);
 
         try {
             await sessionExecutionService.startSessionForStudent(
@@ -125,9 +135,10 @@ export function useSessionExecution() {
             }
 
             setNextSession(updatedSession);
-            setSessionHasStarted(false);
 
-            removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
+            setTimeout(() => {
+                removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
+            }, 2000);
 
             toast.success("Session finished");
         } catch (error) {
@@ -138,11 +149,13 @@ export function useSessionExecution() {
 
     useEffect(() => {
         fetchNextSession();
+
+        return () => sessionExecutionService.cleanup();
     }, [fetchNextSession]);
 
     useEffect(() => {
         (async () => {
-            if (authState.session?.user.username) {
+            if (authState.session?.user.username && !isTabMoved()) {
                 try {
                     const student = await sessionExecutionService.getStudent(
                         authState.session.user.username
@@ -150,6 +163,7 @@ export function useSessionExecution() {
                     if (student.active_session !== null) {
                         setSessionHasStarted(true);
                         setNextSession(student.active_session);
+                        setSessionHasEquipment(!student.active_session.no_equipment);
 
                         sessionExecutionService.setUpdateCallback(
                             student.name,
@@ -179,6 +193,7 @@ export function useSessionExecution() {
         sessionHasStarted,
         sessionProgressData,
         hasNextSession,
+        sessionHasEquipment,
         startSession,
         startHomework,
         fetchNextSession,

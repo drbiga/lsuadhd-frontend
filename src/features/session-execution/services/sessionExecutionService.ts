@@ -184,7 +184,6 @@ class SessionExecutionService {
             this.websocket = createWebSocket(studentName);
             this.websocket.addEventListener('message', (event) => {
                 const data = JSON.parse(event.data);
-                console.log(data);
                 this.initiateTrackingUpload(data.stage, data.remaining_time);
                 updateCallback({
                     stage: data.stage,
@@ -192,6 +191,14 @@ class SessionExecutionService {
                 });
             });
         }
+    }
+
+    public cleanup(): void {
+        if (this.websocket) {
+            this.websocket.close();
+            this.websocket = null;
+        }
+        this.isUploading = false;
     }
 
     private initiateTrackingUpload(stage: Stage, remainingTimeSeconds: number) {

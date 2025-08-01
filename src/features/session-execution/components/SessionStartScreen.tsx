@@ -27,11 +27,11 @@ export function SessionStartScreen({ session, onStartSession }: SessionStartScre
         {session.no_equipment && (
           <>
             <p className="text-sm text-slate-700 dark:text-slate-300">
-              <span className="font-bold text-slate-200 text-xl">
+              <span className="font-bold text-yellow-500 text-xl">
                 Attention!
               </span>{" "}
               You are{" "}
-              <span className="font-bold text-slate-200 text-xl">
+              <span className="font-bold text-yellow-500 text-xl">
                 not supposed to use the headset
               </span>{" "}
               during this session.
@@ -50,13 +50,13 @@ export function SessionStartScreen({ session, onStartSession }: SessionStartScre
           <>
             <p className="text-sm text-slate-700 dark:text-slate-300">
               {session.is_passthrough
-                ? "This session is going to be passthrough"
+                ? "This session is going to be VR passthrough"
                 : "This session is going to be VR"}
             </p>
             <p className="text-sm text-slate-700 dark:text-slate-300">
               {session.has_feedback
                 ? "You are going to receive some feedback this session"
-                : "There will be no feedback for this session"}
+                : "You will not recieve feedback for this session"}
             </p>
           </>
         )}
@@ -71,20 +71,19 @@ export function SessionStartScreen({ session, onStartSession }: SessionStartScre
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>VR Headset</AlertDialogTitle>
+                <div className="text-sm text-muted-foreground">
                   <span className="text-yellow-500 font-bold">You were supposed to be wearing the VR headset already.</span>
                   Are you? If not, it's possible you missed something on the
                   instructions sheet.
                   Please double check.
+                </div>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <AlertDialogAction>
-                  <Button
-                    variant="default"
-                    className="bg-green-600"
-                    onClick={onStartSession}
-                  >
+                <AlertDialogAction
+                  className="bg-green-600 hover:bg-green-700"
+                  onClick={onStartSession}
+                >
                   Start!
-                  </Button>
                 </AlertDialogAction>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
               </AlertDialogFooter>

@@ -31,7 +31,7 @@ export function ReadcompStage({ session, sessionProgressData, onStartHomework }:
 
   return (
     <>
-      {sessionProgressData.remainingTimeSeconds > 5 && (
+      {sessionProgressData.remainingTimeSeconds > 0 && (
         <Walkthrough>
           <WalkthroughInstructionsTitle>
             Reading and Comprehension
@@ -45,7 +45,7 @@ export function ReadcompStage({ session, sessionProgressData, onStartHomework }:
         </Walkthrough>
       )}
 
-      {sessionProgressData.remainingTimeSeconds <= 5 && (
+      {sessionProgressData.remainingTimeSeconds <= 0 && (
         <Walkthrough
           onClose={() => {
             setTimeout(() => {
@@ -59,7 +59,7 @@ export function ReadcompStage({ session, sessionProgressData, onStartHomework }:
           <WalkthroughInstructionsDescription>
             <div className="space-y-3">
               <p>
-                Your 10-minute reading comprehension session has ended.
+                Your 10-minute reading comprehension survey has ended.
                 <span className="text-yellow-500 font-bold"> Please refrain from continuing to work on the passage.</span>
               </p>
               <p className="font-medium">
