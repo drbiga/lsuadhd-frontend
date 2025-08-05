@@ -7,7 +7,7 @@ import NextSession from "./pages/SessionExecution";
 import SessionProgress from "./pages/SessionProgress";
 
 export enum RouteNames {
-    BASENAME = '/lsuadhd-frontend',
+    // BASENAME = '/lsuadhd-frontend',
     HOME = '/',
     LOGIN = '/login',
     SIGNUP = '/signup',
@@ -42,7 +42,7 @@ export default function Routes() {
             )
         },
     ], {
-        basename: RouteNames.BASENAME
+        // basename: RouteNames.BASENAME
     });
 
     return (

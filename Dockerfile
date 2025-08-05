@@ -1,7 +1,8 @@
 FROM node:21 AS build
 WORKDIR /app
 COPY . .
-RUN yarn install && yarn build
+RUN yarn install
+RUN yarn build
 
 
 FROM nginx:1.23.0 AS server
