@@ -1,4 +1,5 @@
 import { useRef } from "react";
+// import { useEffect } from "react";
 import { PageContainer, PageMainContent, PageTitle } from "@/components/layout/Page";
 import { PreSessionChecks } from "@/features/pre-session-checks/components/PreSessionChecks";
 import { SessionInfoDisplay } from "@/features/session-execution/components/SessionInfoDisplay";
@@ -15,25 +16,29 @@ import { Stage } from "@/features/session-execution/services/sessionExecutionSer
 
 export default function NextSession() {
   const sidebarRef = useRef<SidebarHandle>(null);
-  const { 
-    nextSession, 
-    sessionHasStarted, 
-    sessionProgressData, 
+  const {
+    nextSession,
+    sessionHasStarted,
+    sessionProgressData,
     hasNextSession,
     startSession,
     startHomework,
     finishSession
   } = useSessionExecution();
-  
-  const { 
-    completedPreSessionChecks, 
-    setCompletedPreSessionChecks 
+
+  const {
+    completedPreSessionChecks,
+    setCompletedPreSessionChecks
   } = usePreSessionChecks();
 
   const handleStartSession = async () => {
     await startSession();
     sidebarRef.current?.autoCollapse();
   };
+
+  // [MATHEUS] TODO: Delete. I just put this here to skip the pre-session checks when developing
+  // setCompletedPreSessionChecks(true);
+  // useEffect(() => setCompletedPreSessionChecks(true), [])
 
   if (hasNextSession === -1 && (sessionHasStarted || !sessionProgressData)) {
     return (
@@ -65,7 +70,7 @@ export default function NextSession() {
         )}
 
         {completedPreSessionChecks && !sessionHasStarted && hasNextSession === 1 && nextSession && (
-          <SessionStartScreen 
+          <SessionStartScreen
             session={nextSession}
             onStartSession={handleStartSession}
           />
@@ -74,7 +79,7 @@ export default function NextSession() {
         {sessionHasStarted && sessionProgressData && sessionProgressData.stage !== Stage.HOMEWORK && (
           <div className="relative">
             <div className="absolute top-5 left-5">
-              <SessionInfoDisplay 
+              <SessionInfoDisplay
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
               />
@@ -91,32 +96,32 @@ export default function NextSession() {
         {sessionHasStarted && sessionProgressData && nextSession && (
           <>
             {sessionProgressData.stage === Stage.READCOMP && (
-              <ReadcompStage 
+              <ReadcompStage
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
                 onStartHomework={startHomework}
               />
             )}
-            
+
             {sessionProgressData.stage === Stage.HOMEWORK && (
-              <HomeworkStage 
+              <HomeworkStage
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
               />
             )}
-            
+
             {sessionProgressData.stage === Stage.SURVEY && (
-              <SurveyStage 
-                session={nextSession} 
+              <SurveyStage
+                session={nextSession}
                 sessionProgressData={sessionProgressData}
                 onFinishSession={finishSession}
               />
             )}
-            
+
             {sessionProgressData.stage === Stage.FINISHED && (
               <FinishedStage session={nextSession} />
             )}
-            
+
             {!sessionHasStarted && hasNextSession === 0 && (
               <div className="pl-16 pt-8">
                 <h2 className="text-3xl mb-8">Congratulations!</h2>
