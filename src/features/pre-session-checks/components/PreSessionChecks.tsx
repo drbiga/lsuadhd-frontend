@@ -52,7 +52,7 @@ export function checksReducer(
       if (action.type === "NEXT") return { type: "SUPPORTING_APPS" };
       break;
     case "SUPPORTING_APPS":
-      if (action.type === "NEXT") { 
+      if (action.type === "NEXT") {
         if (session?.no_equipment || (session?.seqnum ?? 0) <= 2) {
           return { type: "CONFIRMATION" };
         }
@@ -115,7 +115,7 @@ const AudioCuePlayButton = ({ cue }: { cue: string }) => {
         <CirclePlay />
         Play Sound
       </Button>
-      <audio ref={audioRef} src={`/lsuadhd-frontend/${cue}.mp3`} preload="auto" />
+      <audio ref={audioRef} src={`/${cue}.mp3`} preload="auto" />
     </div>
   );
 };
@@ -127,7 +127,7 @@ export type PreSessionChecksProps = {
 
 export function PreSessionChecks({ completedCallback, session }: PreSessionChecksProps) {
   const [state, dispatch] = useReducer(
-    (state: PreSessionChecksSteps, action: Action) => checksReducer(state, action, session), 
+    (state: PreSessionChecksSteps, action: Action) => checksReducer(state, action, session),
     { type: "WELCOME" }
   );
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
@@ -203,7 +203,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   }, []);
 
   const isPinging = isPingingLocal || isPingingPersonal || (session?.has_feedback ? isPingingFeedback : false);
-    
+
   useEffect(() => {
     pingLocalServer();
     pingPersonalAnalytics();
@@ -257,8 +257,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
               <>
                 <AlertDialogTitle>Welcome</AlertDialogTitle>
                 <AlertDialogDescription>
-                    To ensure a smooth session, you will perform setup checks. 
-                    <span className="text-yellow-500 font-bold"> Please read all instructions carefully.</span>
+                  To ensure a smooth session, you will perform setup checks.
+                  <span className="text-yellow-500 font-bold"> Please read all instructions carefully.</span>
                 </AlertDialogDescription>
               </>
             )}
@@ -266,72 +266,72 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
               <>
                 <AlertDialogTitle>Supporting apps</AlertDialogTitle>
                 <div className="flex flex-col gap-8">
-                    <div className="flex gap-4">
-                        <AlertDialogDescription>
-                        The moment you double clicked on the "Open this first"
-                        shortcut on the desktop, you were supposed to see a
-                        command prompt, which looks like this:
-                        </AlertDialogDescription>
-                        <img
-                        width={"50%"}
-                        src="/lsuadhd-frontend/cmd.jpg"
-                        alt="Command prompt image"
-                        />
-                    </div>
+                  <div className="flex gap-4">
                     <AlertDialogDescription>
-                        It is an intermediary app that launches and runs in the
-                        background to take care of all communications between 
-                        the laptop, the browser, and our servers. Alongside
-                        it, the Personal Analytics app should be running in
-                        the background as well.
+                      The moment you double clicked on the "Open this first"
+                      shortcut on the desktop, you were supposed to see a
+                      command prompt, which looks like this:
                     </AlertDialogDescription>
-                    <AlertDialogDescription>
-                        <span className="text-yellow-500 font-bold">Please ensure {session?.has_feedback ? 'all systems' : 'both the server and app'} are running. </span> 
-                        Refer to the indicators below for guidance.
-                    </AlertDialogDescription>
-                    {localServerIsWorking && (
+                    <img
+                      width={"50%"}
+                      src="/lsuadhd-frontend/cmd.jpg"
+                      alt="Command prompt image"
+                    />
+                  </div>
+                  <AlertDialogDescription>
+                    It is an intermediary app that launches and runs in the
+                    background to take care of all communications between
+                    the laptop, the browser, and our servers. Alongside
+                    it, the Personal Analytics app should be running in
+                    the background as well.
+                  </AlertDialogDescription>
+                  <AlertDialogDescription>
+                    <span className="text-yellow-500 font-bold">Please ensure {session?.has_feedback ? 'all systems' : 'both the server and app'} are running. </span>
+                    Refer to the indicators below for guidance.
+                  </AlertDialogDescription>
+                  {localServerIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-green-600"></span>
-                        The Local Server appears to be online
+                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
+                      The Local Server appears to be online
                     </AlertDialogDescription>
-                    )}
-                    {!localServerIsWorking && (
+                  )}
+                  {!localServerIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-red-600"></span>
-                        The Local Server appears to be offline
+                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
+                      The Local Server appears to be offline
                     </AlertDialogDescription>
-                    )}
-                    {personalAnalyticsIsWorking && (
+                  )}
+                  {personalAnalyticsIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-green-600"></span>
-                        The Personal Analytics app appears to be online
+                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
+                      The Personal Analytics app appears to be online
                     </AlertDialogDescription>
-                    )}
-                    {!personalAnalyticsIsWorking && (
+                  )}
+                  {!personalAnalyticsIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-red-600"></span>
-                        The Personal Analytics app appears to be offline.
+                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
+                      The Personal Analytics app appears to be offline.
                     </AlertDialogDescription>
-                    )}
-                    {session?.has_feedback && feedbackSystemIsWorking && (
+                  )}
+                  {session?.has_feedback && feedbackSystemIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-green-600"></span>
-                        The Stoplight Feedback System appears to be online
+                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
+                      The Stoplight Feedback System appears to be online
                     </AlertDialogDescription>
-                    )}
-                    {session?.has_feedback && !feedbackSystemIsWorking && (
+                  )}
+                  {session?.has_feedback && !feedbackSystemIsWorking && (
                     <AlertDialogDescription className="flex items-center gap-1">
-                        <span className="w-1 h-1 rounded-full bg-red-600"></span>
-                        The Stoplight Feedback System appears to be offline
+                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
+                      The Stoplight Feedback System appears to be offline
                     </AlertDialogDescription>
-                    )}
-                    {(!localServerIsWorking || !personalAnalyticsIsWorking || (session?.has_feedback && !feedbackSystemIsWorking)) && (
+                  )}
+                  {(!localServerIsWorking || !personalAnalyticsIsWorking || (session?.has_feedback && !feedbackSystemIsWorking)) && (
                     <AlertDialogDescription className="text-red-500">
-                        If the PersonalAnalytics app, the command prompt{session?.has_feedback ? ', or the Stoplight Feedback System' : ''} {session?.has_feedback ? 'are' : 'is'} currently running, 
-                        please close them. Then, attempt to re-run the applications until the indicators each display online status.
-                        If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
+                      If the PersonalAnalytics app, the command prompt{session?.has_feedback ? ', or the Stoplight Feedback System' : ''} {session?.has_feedback ? 'are' : 'is'} currently running,
+                      please close them. Then, attempt to re-run the applications until the indicators each display online status.
+                      If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
                     </AlertDialogDescription>
-                    )}
+                  )}
                 </div>
               </>
             )}
@@ -343,8 +343,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                     Plug the headphones into the headset using the headphone jack on the right strap of the headset.
                   </AlertDialogDescription>
                   <AlertDialogDescription>
-                    Then, make sure you have the volume of the headset high enough. 
-                    You can raise the volume using the buttons on the bottom 
+                    Then, make sure you have the volume of the headset high enough.
+                    You can raise the volume using the buttons on the bottom
                     right section of the headset as shown in the image.
                   </AlertDialogDescription>
                   <div className="flex justify-center">
@@ -355,9 +355,9 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                     />
                   </div>
                   <AlertDialogDescription>
-                    Please check the 'beep' noise to ensure it is set at a comfortable level. 
+                    Please check the 'beep' noise to ensure it is set at a comfortable level.
                     <span className="text-yellow-500 font-bold"> This sound serves as
-                    feedback when distraction is detected during the session.</span>
+                      feedback when distraction is detected during the session.</span>
                   </AlertDialogDescription>
                 </div>
               </>
@@ -367,7 +367,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                 <AlertDialogTitle>Setting VR mode to Passthrough</AlertDialogTitle>
                 <AlertDialogDescription>
                   On the Meta Workrooms app on the headset, <span className="text-yellow-500 font-bold">make sure that the
-                  VR mode is set to passthrough</span> and that you can see your
+                    VR mode is set to passthrough</span> and that you can see your
                   surroundings. If you see a virtual environment, please set to
                   passthrough before continuing.
                 </AlertDialogDescription>
@@ -384,7 +384,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
             {state.type === "CONFIRMATION" && (
               <>
                 <AlertDialogTitle>Success!</AlertDialogTitle>
-                
+
                 <AlertDialogDescription>
                   You have finished all pre-session checks
                 </AlertDialogDescription>
@@ -400,7 +400,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                 onChange={(e) =>
                   dispatch({ type: "SET_AUDIO_CUE", answer: e.target.value })
                 }
-              /> 
+              />
               {state.error && (
                 <AlertDialogDescription className="text-red-500 text-sm">
                   {state.error}
@@ -432,11 +432,11 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                   ) : (
                     <div className="w-2 h-2 rounded-full bg-red-600"></div>
                   )}
-                  <Button 
+                  <Button
                     disabled={isPinging}
                     onClick={() => {
-                      pingLocalServer(); 
-                      pingPersonalAnalytics(); 
+                      pingLocalServer();
+                      pingPersonalAnalytics();
                       if (session?.has_feedback) {
                         pingFeedbackSystem();
                       }
@@ -453,8 +453,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                 <Button
                   variant={"outline"}
                   disabled={
-                    !localServerIsWorking || 
-                    !personalAnalyticsIsWorking || 
+                    !localServerIsWorking ||
+                    !personalAnalyticsIsWorking ||
                     (session?.has_feedback && !feedbackSystemIsWorking)
                   }
                   onClick={() => dispatch({ type: "NEXT" })}
