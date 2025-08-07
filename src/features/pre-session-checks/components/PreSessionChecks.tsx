@@ -274,7 +274,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                     </AlertDialogDescription>
                     <img
                       width={"50%"}
-                      src="/lsuadhd-frontend/cmd.jpg"
+                      src="/cmd.jpg"
                       alt="Command prompt image"
                     />
                   </div>
@@ -350,7 +350,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                   <div className="flex justify-center">
                     <img
                       width={"60%"}
-                      src="/lsuadhd-frontend/headset-vol-buttons.jpg"
+                      src="/headset-vol-buttons.jpg"
                       alt="volume buttons"
                     />
                   </div>

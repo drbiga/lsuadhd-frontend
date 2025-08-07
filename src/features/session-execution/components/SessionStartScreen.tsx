@@ -72,7 +72,7 @@ export function SessionStartScreen({ session, onStartSession }: SessionStartScre
               <AlertDialogHeader>
                 <AlertDialogTitle>VR Headset</AlertDialogTitle>
                 <div className="text-sm text-muted-foreground">
-                  <span className="text-yellow-500 font-bold">You were supposed to be wearing the VR headset already.</span>
+                  <span className="text-yellow-500 font-bold">You were supposed to be wearing the VR headset already. </span>
                   Are you? If not, it's possible you missed something on the
                   instructions sheet.
                   Please double check.

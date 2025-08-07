@@ -215,7 +215,7 @@ class SessionExecutionService {
 
 function createWebSocket(studentName: string): WebSocket {
     const session = iamService.getCurrentSession();
-    const socket = new WebSocket(`${import.meta.env.VITE_WEBSOCKET_PROTOCOL || "wss"}://${import.meta.env.VITE_BACKEND_HOST}:${import.meta.env.VITE_BACKEND_PORT}/api/session_execution/student/${studentName}/session/observer?token=${session.token}`);
+    const socket = new WebSocket(`${import.meta.env.VITE_WEBSOCKET_PROTOCOL || "wss"}://${import.meta.env.VITE_BACKEND_HOST}:${import.meta.env.VITE_BACKEND_PORT}${import.meta.env.VITE_BACKEND_PATH_PREFIX}/session_execution/student/${studentName}/session/observer?token=${session.token}`);
 
     socket.onopen = () => {
         console.log('WebSocket connection established.');
