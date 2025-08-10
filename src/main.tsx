@@ -6,9 +6,7 @@ import { AuthProvider } from './hooks/auth.tsx'
 import './lib/tabManager.ts'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
     <AuthProvider>
       <App />
     </AuthProvider>
-  </React.StrictMode>
 )
