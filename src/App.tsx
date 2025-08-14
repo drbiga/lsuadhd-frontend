@@ -3,6 +3,7 @@ import 'react-toastify/dist/ReactToastify.css';
 import Routes from "./Routes";
 import BackendErrorPage from "./components/common/BackendErrorPage";
 import { useState, useEffect } from "react";
+import { removeLocalStorage, Item } from "./lib/localstorage";
 
 function App() {
     const [showError, setShowError] = useState(false);
@@ -26,6 +27,7 @@ function App() {
     }, []);
 
     if (showError) {
+        removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
         return <BackendErrorPage />;
     }
 

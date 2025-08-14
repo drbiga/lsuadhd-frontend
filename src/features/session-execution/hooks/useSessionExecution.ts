@@ -185,7 +185,7 @@ export function useSessionExecution() {
                 }
             }
         })();
-    }, [authState.session?.user.username, saveToLocalStorage]);
+    }, [authState.session?.user.username]);
 
     return {
         nextSession,

@@ -2,6 +2,7 @@ import axios, { AxiosError } from "axios";
 import api from "@/services/api";
 import iamService from "@/services/iam";
 import { toast } from "react-toastify";
+import { removeLocalStorage, Item } from "@/lib/localstorage";
 
 export type Student = {
     name: string;
@@ -183,6 +184,7 @@ class SessionExecutionService {
         if (this.websocket === null) {
             this.websocket = createWebSocket(studentName);
             this.websocket.addEventListener('message', (event) => {
+                console.log('WebSocket message received (setUpdateCallback):', event.data);
                 const data = JSON.parse(event.data);
                 this.initiateTrackingUpload(data.stage, data.remaining_time);
                 updateCallback({
@@ -226,11 +228,13 @@ function createWebSocket(studentName: string): WebSocket {
             console.log(`WebSocket closed cleanly, code=${event.code}, reason=${event.reason}`);
         } else {
             console.error('WebSocket connection closed unexpectedly');
+            removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
         }
     };
 
     socket.onerror = (error) => {
         console.error(`WebSocket error:`, error);
+        removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
     };
 
     return socket;

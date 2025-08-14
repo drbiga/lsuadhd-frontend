@@ -101,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 // toast.error("Something went wrong when initializing the local server")
             }
         }
-    }, [authState]);
+    }, [authState.isLoggedIn, authState.session]);
 
 
     const login = useCallback(async (credentials: LoginCredentials) => {

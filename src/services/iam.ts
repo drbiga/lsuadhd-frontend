@@ -52,10 +52,11 @@ class IamService {
     }
 
     public getCurrentSession(): Session {
-        if (this.currentSession)
+        if (this.currentSession) {
             return this.currentSession;
-        else
+        } else {
             throw Error('No running session');
+        }
     }
 
     public async createSession(username: string, password: string, ipAddress: string): Promise<Session> {

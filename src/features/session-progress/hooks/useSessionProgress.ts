@@ -36,7 +36,7 @@ export function useSessionProgress() {
                 setIsLoading(false);
             }
         })();
-    }, [authState]);
+    }, [authState.session?.user.username]);
 
     return {
         sessionsDone,
