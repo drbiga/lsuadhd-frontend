@@ -1,8 +1,22 @@
 import { PropsWithChildren } from "react";
+import { useAuth } from "@/hooks/auth";
 
 export function PageContainer({ children }: PropsWithChildren) {
+    const { authState } = useAuth();
+    const user = authState?.session?.user;
+
     return (
-        <div className="h-[100vh] w-[100vw] flex bg-background">{children}</div>
+        <div className="h-[100vh] w-[100vw] flex bg-background relative">
+            {authState.isLoggedIn && user && (
+                <div className="absolute top-4 right-4 z-50 flex items-center gap-3">
+                    <div className="bg-card text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-2xl p-3">
+                        <p className="text-sm font-medium">Logged in as: <span className="text-yellow-500">{user.username}</span></p>
+                    </div>
+                </div>
+            )}
+
+            {children}
+        </div>
     )
 }
 

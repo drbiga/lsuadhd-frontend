@@ -32,7 +32,8 @@ export type Action =
   | { type: "SET_AUDIO_CUE"; answer: string }
   | { type: "VALIDATE_CUE" }
   | { type: "FINISH" }
-  | { type: "CHANGE_CUE" };
+  | { type: "CHANGE_CUE" }
+  | { type: "RESET" };
 
 export function checksReducer(
   state: PreSessionChecksSteps,
@@ -45,6 +46,11 @@ export function checksReducer(
     const currentIndex = availableCues.indexOf(currentCue);
     const nextIndex = (currentIndex + 1) % availableCues.length;
     return availableCues[nextIndex];
+  }
+
+  switch (action.type) {
+    case "RESET":
+      return { type: "WELCOME" };
   }
 
   switch (state.type) {
@@ -237,6 +243,11 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
             window.location.href = window.location.origin + window.location.pathname;
             return;
           }
+          dispatch({ type: "RESET" });
+          setLocalServerIsWorking(false);
+          setPersonalAnalyticsIsWorking(false);
+          setFeedbackSystemIsWorking(false);
+          setBeepChecked(false);
           setDialogIsOpen(true);
         }}
       >
@@ -244,12 +255,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
       </Button>
       <AlertDialog
         open={dialogIsOpen}
-        onOpenChange={(v) => {
-          setDialogIsOpen(v);
-          if (v) {
-            setDialogIsOpen(v);
-          }
-        }}
+        onOpenChange={setDialogIsOpen}
       >
         <AlertDialogContent className="max-h-[90vh] overflow-y-auto">
           <AlertDialogHeader>
@@ -410,7 +416,19 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
           )}
 
           <AlertDialogFooter>
-            {["WELCOME", "VR_MODE_PASSTHROUGH"].includes(state.type) && (
+            {state.type !== "DONE" && (
+              <div className="w-full flex justify-start">
+                <Button
+                  variant="link"
+                  onClick={() => {
+                    setDialogIsOpen(false);
+                  }}
+                >
+                  Close
+                </Button>
+              </div>
+            )}
+            {state.type === "WELCOME" && (
               <Button
                 variant={"outline"}
                 onClick={() => dispatch({ type: "NEXT" })}
