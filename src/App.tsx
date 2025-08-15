@@ -11,15 +11,18 @@ function App() {
     useEffect(() => {
         const pingBackend = async () => {
             try {
+                const isHttps = import.meta.env.VITE_IS_HTTPS === 'yes' || false;
+                const protocol = isHttps ? 'https' : 'http';
                 const host = import.meta.env.VITE_BACKEND_HOST || 'localhost';
                 const port = import.meta.env.VITE_BACKEND_PORT || '8000';
-                await fetch(`http://${host}:${port}/health_check`);
+                const backendPrefix = import.meta.env.VITE_BACKEND_PATH_PREFIX || '';
+                await fetch(`${protocol}://${host}:${port}${backendPrefix}/health_check`);
                 setShowError(false);
             } catch {
                 setShowError(true);
             }
         };
-        
+
         const interval = setInterval(pingBackend, 10000);
         pingBackend();
 
