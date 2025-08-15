@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import { useCallback, useReducer, useRef, useState } from "react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -209,8 +209,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   }, []);
 
   const isPinging = isPingingLocal || isPingingPersonal || (session?.has_feedback ? isPingingFeedback : false);
-
-  useEffect(() => {
+  
+  const initializeSystemChecks = useCallback(() => {
     pingLocalServer();
     pingPersonalAnalytics();
     if (session?.has_feedback) {
@@ -219,7 +219,6 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
       setFeedbackSystemIsWorking(true);
     }
   }, [pingLocalServer, pingPersonalAnalytics, pingFeedbackSystem, session]);
-
 
   const handleCheckBeep = () => {
     try {
@@ -249,6 +248,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
           setFeedbackSystemIsWorking(false);
           setBeepChecked(false);
           setDialogIsOpen(true);
+          initializeSystemChecks();
         }}
       >
         Begin

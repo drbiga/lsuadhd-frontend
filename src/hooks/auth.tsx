@@ -74,10 +74,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })();
     }, []);
 
-    useEffect(() => {
-        initializeLocalServer();
-    }, []);
-
     const initializeLocalServer = useCallback(async () => {
         try {
             if (!authState.isLoggedIn) {
@@ -98,7 +94,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                         return authState;
                     }
                 }
-                // toast.error("Something went wrong when initializing the local server")
             }
         }
     }, [authState.isLoggedIn, authState.session]);

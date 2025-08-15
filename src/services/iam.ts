@@ -63,9 +63,6 @@ class IamService {
         const response = await api.post('/iam/session', { username, password, ip_address: ipAddress })
         this.currentSession = response.data;
         setLocalStorage(Item.SESSION_OBJ, JSON.stringify(this.currentSession));
-        // this.localServerUpToDate = false;
-        // this.updateLocalServer();
-        await axios.post('http://localhost:8001/session', this.currentSession);
         return response.data;
     }
 
