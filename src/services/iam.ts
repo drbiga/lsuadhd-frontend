@@ -1,6 +1,5 @@
 import { getLocalStorage, Item, setLocalStorage } from "@/lib/localstorage";
 import api from "./api";
-import axios from "axios";
 
 enum Role {
     MANAGER = 'manager',
