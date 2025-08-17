@@ -184,7 +184,6 @@ class SessionExecutionService {
         if (this.websocket === null) {
             this.websocket = createWebSocket(studentName);
             this.websocket.addEventListener('message', (event) => {
-                console.log('WebSocket message received (setUpdateCallback):', event.data);
                 const data = JSON.parse(event.data);
                 this.initiateTrackingUpload(data.stage, data.remaining_time);
                 updateCallback({
