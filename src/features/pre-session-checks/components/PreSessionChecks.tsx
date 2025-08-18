@@ -419,7 +419,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                     setDialogIsOpen(false);
                   }}
                 >
-                  Close
+                  Close Checks
                 </Button>
               </div>
             )}
