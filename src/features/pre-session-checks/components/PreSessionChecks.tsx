@@ -18,6 +18,14 @@ import { useAuth } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
 import { Session } from "@/features/session-execution/services/sessionExecutionService";
 
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog"
+
 export type PreSessionChecksSteps =
   | { type: "WELCOME" }
   | { type: "SUPPORTING_APPS" }
@@ -126,6 +134,29 @@ const AudioCuePlayButton = ({ cue }: { cue: string }) => {
   );
 };
 
+const FixDialog = ({
+  isOpen,
+  onClose,
+  title,
+  children,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
+}) => {
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
+          {children}
+        </DialogHeader>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 export type PreSessionChecksProps = {
   completedCallback: () => void;
   session: Session | null;
@@ -145,6 +176,9 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   const [isPingingPersonal, setIsPingingPersonal] = useState(false);
   const [isPingingFeedback, setIsPingingFeedback] = useState(false);
   const [beepChecked, setBeepChecked] = useState(false);
+  const [showLocalServerFix, setShowLocalServerFix] = useState(false);
+  const [showPersonalAnalyticsFix, setShowPersonalAnalyticsFix] = useState(false);
+  const [showFeedbackSystemFix, setShowFeedbackSystemFix] = useState(false);
 
   const { initializeLocalServer } = useAuth();
 
@@ -266,72 +300,53 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
             {state.type === "SUPPORTING_APPS" && (
               <>
                 <AlertDialogTitle>Supporting apps</AlertDialogTitle>
-                <div className="flex flex-col gap-8">
-                  <div className="flex gap-4">
-                    <AlertDialogDescription>
-                      The moment you double clicked on the "Open this first"
-                      shortcut on the desktop, you were supposed to see a
-                      command prompt, which looks like this:
-                    </AlertDialogDescription>
-                    <img
-                      width={"50%"}
-                      src="/cmd.jpg"
-                      alt="Command prompt image"
-                    />
-                  </div>
-                  <AlertDialogDescription>
-                    It is an intermediary app that launches and runs in the
-                    background to take care of all communications between
-                    the laptop, the browser, and our servers. Alongside
-                    it, the Personal Analytics app should be running in
-                    the background as well.
-                  </AlertDialogDescription>
+                <div className="flex flex-col gap-6">
                   <AlertDialogDescription>
                     <span className="text-yellow-500 font-bold">Please ensure {session?.has_feedback ? 'all systems' : 'both the server and app'} are running. </span>
                     Refer to the indicators below for guidance.
                   </AlertDialogDescription>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className={cn("w-3 h-3 rounded-full", localServerIsWorking ? "bg-green-600" : "bg-red-600")}></span>
+                      <AlertDialogDescription>
+                        The Local Server appears to be {localServerIsWorking ? "online" : "offline"}
+                      </AlertDialogDescription>
+                    </div>
+                    {!localServerIsWorking && (
+                      <Button variant="outline" size="sm" onClick={() => setShowLocalServerFix(true)}>
+                        Fix
+                      </Button>
+                    )}
+                  </div>
                   {localServerIsWorking && (
-                    <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
-                      The Local Server appears to be online
-                    </AlertDialogDescription>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={cn("w-3 h-3 rounded-full", personalAnalyticsIsWorking ? "bg-green-600" : "bg-red-600")}></span>
+                        <AlertDialogDescription>
+                          The Personal Analytics app appears to be {personalAnalyticsIsWorking ? "online" : "offline"}
+                        </AlertDialogDescription>
+                      </div>
+                      {!personalAnalyticsIsWorking && (
+                        <Button variant="outline" size="sm" onClick={() => setShowPersonalAnalyticsFix(true)}>
+                          Fix
+                        </Button>
+                      )}
+                    </div>
                   )}
-                  {!localServerIsWorking && (
-                    <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
-                      The Local Server appears to be offline
-                    </AlertDialogDescription>
-                  )}
-                  {personalAnalyticsIsWorking && (
-                    <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
-                      The Personal Analytics app appears to be online
-                    </AlertDialogDescription>
-                  )}
-                  {!personalAnalyticsIsWorking && (
-                    <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
-                      The Personal Analytics app appears to be offline.
-                    </AlertDialogDescription>
-                  )}
-                  {session?.has_feedback && feedbackSystemIsWorking && (
-                    <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-green-600"></span>
-                      The Stoplight Feedback System appears to be online
-                    </AlertDialogDescription>
-                  )}
-                  {session?.has_feedback && !feedbackSystemIsWorking && (
-                    <AlertDialogDescription className="flex items-center gap-1">
-                      <span className="w-1 h-1 rounded-full bg-red-600"></span>
-                      The Stoplight Feedback System appears to be offline
-                    </AlertDialogDescription>
-                  )}
-                  {(!localServerIsWorking || !personalAnalyticsIsWorking || (session?.has_feedback && !feedbackSystemIsWorking)) && (
-                    <AlertDialogDescription className="text-red-500">
-                      If the PersonalAnalytics app, the command prompt{session?.has_feedback ? ', or the Stoplight Feedback System' : ''} {session?.has_feedback ? 'are' : 'is'} currently running,
-                      please close them. Then, attempt to re-run the applications until the indicators each display online status.
-                      If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
-                    </AlertDialogDescription>
+                  {session?.has_feedback && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={cn("w-3 h-3 rounded-full", feedbackSystemIsWorking ? "bg-green-600" : "bg-red-600")}></span>
+                        <AlertDialogDescription>
+                          The Stoplight Feedback System appears to be {feedbackSystemIsWorking ? "online" : "offline"}
+                        </AlertDialogDescription>
+                      </div>
+                      {!feedbackSystemIsWorking && (
+                        <Button variant="outline" size="sm" onClick={() => setShowFeedbackSystemFix(true)}>
+                          Fix
+                        </Button>
+                      )}
+                    </div>
                   )}
                 </div>
               </>
@@ -531,6 +546,93 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      <FixDialog 
+        isOpen={showLocalServerFix} 
+        onClose={() => setShowLocalServerFix(false)}
+        title="Fix Local Server"
+      >
+        <img
+            className="rounded-md shadow"
+            src="/cmd.png"
+            alt="Local Server"
+        />
+
+        <DialogDescription>
+          The local server (shown above) acts as an intermediary app that runs in the background, 
+          managing communications between the laptop, the browser, and our servers.
+          If the Local Server is currently running, please close the command prompt window. 
+          Then, double-click the "Open this first" shortcut on the desktop to restart the local server.
+          Wait a few seconds and click "Click to Verify Again" to check the status.
+        </DialogDescription>
+        <DialogDescription>
+          If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
+        </DialogDescription>
+      </FixDialog>
+
+      <FixDialog 
+        isOpen={showPersonalAnalyticsFix} 
+        onClose={() => setShowPersonalAnalyticsFix(false)}
+        title="Fix Personal Analytics App"
+      >
+        <div className="flex gap-4 overflow-x-auto py-2 w-full scrollbar-thick">
+          <img
+            className="flex-shrink-0 h-[300px] rounded-md shadow"
+            src="/personalanalytics1.png"
+            alt="Step 1"
+          />
+          <img
+            className="flex-shrink-0 h-[300px] rounded-md shadow"
+            src="/personalanalytics2.png"
+            alt="Step 2"
+          />
+          <img
+            className="flex-shrink-0 h-[300px] rounded-md shadow"
+            src="/personalanalytics3.png"
+            alt="Step 3"
+          />
+          <img
+            className="flex-shrink-0 h-[300px] rounded-md shadow"
+            src="/personalanalytics4.png"
+            alt="Step 4"
+          />
+        </div>
+
+
+        <DialogDescription>
+          If the Personal Analytics app is currently running, please close it completely.
+          <span className="text-yellow-500"> Please use the scrollbar above to view the instructions 
+          for closing the PersonalAnalytics app. </span>
+          Then, restart the app using the provided executable file (.exe).
+          Wait a few seconds and click "Click to Verify Again" to check the status.
+        </DialogDescription>
+        <DialogDescription>
+          If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
+        </DialogDescription>
+      </FixDialog>
+
+      <FixDialog 
+        isOpen={showFeedbackSystemFix} 
+        onClose={() => setShowFeedbackSystemFix(false)}
+        title="Fix Stoplight Feedback System"
+      >
+        <div className="flex justify-center p-3">
+          <img
+            width={"60%"}
+            src="/closestoplight.png"
+            alt="closestoplight"
+          />
+        </div>
+        <DialogDescription>
+          The stoplight app should be centered at the top of each display used by the computer. 
+          If it appears to be open, please close it completely (as indicated by the image). Then, 
+          re-open the Stoplight executable (.exe) file once more.
+          Wait a few seconds and click "Click to Verify Again" to check the status.
+        </DialogDescription>
+        <DialogDescription>
+          If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
+        </DialogDescription>
+      </FixDialog>
     </>
   );
 }
