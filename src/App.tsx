@@ -5,11 +5,13 @@ import BackendErrorPage from "./components/common/BackendErrorPage";
 import { useState, useEffect, useRef } from "react";
 import { removeLocalStorage, Item, getLocalStorage } from "./lib/localstorage";
 import axios from "axios";
+import { useAuth } from "./hooks/auth";
 
 function App() {
     const [showError, setShowError] = useState(false);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const isBackendDownRef = useRef(false);
+    const { initializeLocalServer, authState } = useAuth();
 
     useEffect(() => {
         const pingBackend = async () => {
@@ -25,9 +27,14 @@ function App() {
                     clearTimeout(timeoutRef.current);
                 }
                 
-                // If session is recovered --> restart collection
+                // If session is recovered --> restart collection and reinitialize local server
                 if (isBackendDownRef.current) {
                     setTimeout(async () => {
+                        // Initialize local server session on recovery
+                        if (authState.isLoggedIn) {
+                            initializeLocalServer();
+                        }
+                        
                         const cachedData = getLocalStorage(Item.SESSION_EXECUTION_CACHE);
                         if (cachedData) {
                             try {
@@ -69,6 +76,12 @@ function App() {
     }, []);
 
     if (showError) {
+        // If there are URL parameters, redirect to base path to clean them up
+        // This prevents issues with autoclose and other parameters during error states
+        if (window.location.search) {
+            window.location.href = window.location.origin + window.location.pathname;
+            return null;
+        }
         removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
         return <BackendErrorPage />;
     }

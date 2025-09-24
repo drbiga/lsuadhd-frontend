@@ -71,6 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         (async () => {
             const response = await axios.get('https://api.ipify.org/?format=json');
             setIpAddress(response.data.ip);
+
+            if (authState.isLoggedIn && authState.session) {
+                initializeLocalServer();    
+            }
+
         })();
     }, []);
 
@@ -97,7 +102,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             }
         }
     }, [authState.isLoggedIn, authState.session]);
-
 
     const login = useCallback(async (credentials: LoginCredentials) => {
         try {

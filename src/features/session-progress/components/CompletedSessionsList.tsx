@@ -23,7 +23,7 @@ export function CompletedSessionsList({ sessions, analytics }: CompletedSessions
       <ul className="flex flex-col gap-8 px-2">
         {sessions.length > 0 &&
           analytics.length > 0 &&
-          sessions.map((session) => (
+          sessions.sort((a, b) => a.seqnum - b.seqnum).map((session) => (
             <li key={session.seqnum} className="bg-card p-4 h-[80vh] w-[70vw] rounded-lg flex">
               <div className="w-[30%]">
                 <p className="text-2xl text-slate-700 dark:text-slate-300">
