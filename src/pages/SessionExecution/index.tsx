@@ -13,6 +13,7 @@ import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { useSessionExecution } from "@/features/session-execution/hooks/useSessionExecution";
 import { usePreSessionChecks } from "@/features/pre-session-checks/hooks/usePreSessionChecks";
 import { Stage } from "@/features/session-execution/services/sessionExecutionService";
+import { useAuth } from "@/hooks/auth";
 
 export default function NextSession() {
   const sidebarRef = useRef<SidebarHandle>(null);
@@ -31,6 +32,9 @@ export default function NextSession() {
     completedPreSessionChecks,
     setCompletedPreSessionChecks
   } = usePreSessionChecks();
+
+  const { authState } = useAuth();
+  const studentName = authState.session?.user.username;
 
   const handleStartSession = async () => {
     await startSession();
@@ -100,6 +104,7 @@ export default function NextSession() {
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
                 onStartHomework={startHomework}
+                studentName={studentName}
               />
             )}
 
@@ -115,6 +120,7 @@ export default function NextSession() {
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
                 onFinishSession={finishSession}
+                studentName={studentName}
               />
             )}
 
