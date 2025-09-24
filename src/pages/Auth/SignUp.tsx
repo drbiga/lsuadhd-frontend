@@ -1,4 +1,4 @@
-import { Button } from "@/components/common/Button";
+import { Button } from "@/components/ui/button"
 import { DarkModeButton } from "@/components/common/DarkModeButton";
 import { useAuth } from "@/hooks/auth";
 import sessionExecutionService from "@/features/session-execution/services/sessionExecutionService";
@@ -73,10 +73,13 @@ export default function SignUp() {
 
             <div className="flex justify-around">
               <DarkModeButton />
-              <Button>
-                <Link className="" to='/login'>Log In</Link>
+              <Button
+                variant="link"
+                type="button"
+              >
+                <Link className="" to='/login'>Back to Log In</Link>
               </Button>
-              <Button type="submit">Sign Up</Button>
+              <Button variant="outline" type="submit">Sign Up</Button>
             </div>
           </form>
         </div>

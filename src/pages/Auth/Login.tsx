@@ -1,4 +1,4 @@
-import { Button } from "@/components/common/Button";
+import { Button } from "@/components/ui/button"
 import { DarkModeButton } from "@/components/common/DarkModeButton";
 import { useAuth } from "@/hooks/auth";
 import { useCallback, useEffect } from "react";
@@ -73,10 +73,10 @@ export default function Login() {
 
             <div className="flex justify-around">
               <DarkModeButton />
-              <Button>
-                <Link className="" to='/signup'>Sign Up</Link>
+              <Button variant="link" type="button">
+                <Link className="" to='/signup'>Go to Sign Up</Link>
               </Button>
-              <Button type="submit">Log In</Button>
+              <Button variant="outline" type="submit">Log In</Button>
             </div>
           </form>
         </div>
