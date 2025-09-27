@@ -370,11 +370,13 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                       alt="volume buttons"
                     />
                   </div>
-                  <AlertDialogDescription>
-                    Please check the 'beep' noise to ensure it is set at a comfortable level.
-                    <span className="text-yellow-500 font-bold"> This sound serves as
-                      feedback when distraction is detected during the session.</span>
-                  </AlertDialogDescription>
+                  {session?.has_feedback && !session?.is_passthrough && (
+                    <AlertDialogDescription>
+                      Please check the 'beep' noise to ensure it is set at a comfortable level.
+                      <span className="text-yellow-500 font-bold"> This sound serves as
+                        feedback when distraction is detected during the session.</span>
+                    </AlertDialogDescription>
+                  )}
                 </div>
               </>
             )}
@@ -497,11 +499,11 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                 <Button
                   variant={"outline"}
                   onClick={() => dispatch({ type: "NEXT" })}
-                  disabled={session?.has_feedback && !beepChecked}
+                  disabled={session?.has_feedback && !session?.is_passthrough && !beepChecked}
                 >
                   Continue
                 </Button>
-                {session?.has_feedback && (
+                {session?.has_feedback && !session?.is_passthrough && (
                   <Button
                     variant="outline"
                     onClick={handleCheckBeep}
@@ -510,6 +512,15 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                   </Button>
                 )}
               </>
+            )}
+
+            {state.type === "VR_MODE_PASSTHROUGH" && (
+              <Button
+                variant={"outline"}
+                onClick={() => dispatch({ type: "NEXT" })}
+              >
+                Continue
+              </Button>
             )}
 
             {state.type === "AUDIO_CUE" && (
