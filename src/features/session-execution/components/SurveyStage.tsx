@@ -1,14 +1,6 @@
 import { Session, SessionProgressData } from "@/features/session-execution/services/sessionExecutionService";
 import { Walkthrough, WalkthroughInstructionsDescription, WalkthroughInstructionsTitle } from "@/features/session-execution/components/Walkthrough";
 import { useState, useEffect } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  AlertDialog,
-  AlertDialogContent,
-  AlertDialogTitle,
-  AlertDialogFooter,
-  AlertDialogHeader,
-} from "@/components/ui/alert-dialog";
 import { redcapService, SURVEY_NAMES } from "@/services/redcap";
 
 interface SurveyStageProps {
@@ -19,7 +11,6 @@ interface SurveyStageProps {
 }
 
 export function SurveyStage({ session, sessionProgressData, onFinishSession, studentName }: SurveyStageProps) {
-  const [showSubmissionModal, setShowSubmissionModal] = useState(false);
   const [isCheckingCompletion, setIsCheckingCompletion] = useState(false);
   const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
 
@@ -55,7 +46,6 @@ export function SurveyStage({ session, sessionProgressData, onFinishSession, stu
           clearInterval(pollInterval);
           setPollInterval(null);
         }
-        setShowSubmissionModal(false);
         if (onFinishSession) {
           onFinishSession();
         }
@@ -82,6 +72,12 @@ export function SurveyStage({ session, sessionProgressData, onFinishSession, stu
     };
   }, [pollInterval]);
 
+  useEffect(() => {
+    if (sessionProgressData.remainingTimeSeconds <= 0 && !pollInterval) {
+      startPolling();
+    }
+  }, [sessionProgressData.remainingTimeSeconds, pollInterval]);
+
   return (
     <>
       {sessionProgressData.remainingTimeSeconds > 0 && (
@@ -96,14 +92,7 @@ export function SurveyStage({ session, sessionProgressData, onFinishSession, stu
       )}
       
       {sessionProgressData.remainingTimeSeconds <= 0 && (
-        <Walkthrough
-          onClose={() => {
-            setTimeout(() => {
-              setShowSubmissionModal(true);
-              startPolling();
-            }, 5000);
-          }}
-        >
+        <Walkthrough>
           <WalkthroughInstructionsTitle>
             Your Survey Time is Up!
           </WalkthroughInstructionsTitle>
@@ -120,58 +109,31 @@ export function SurveyStage({ session, sessionProgressData, onFinishSession, stu
                 <li>Scroll to the bottom of the survey</li>
                 <li>Click the <strong className="text-yellow-500 font-bold">Submit</strong> button to save your answers</li>
               </ol>
+              <p className="text-sm text-yellow-500 font-bold mt-3">
+                The system will automatically detect your submission and proceed to the next stage.
+              </p>
             </div>
           </WalkthroughInstructionsDescription>
         </Walkthrough>
       )}
 
-      {showSubmissionModal && (
-        <AlertDialog open={showSubmissionModal}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Please Submit Your Survey</AlertDialogTitle>
-            </AlertDialogHeader>
-            <div className="py-4">
-              <p>Please complete and submit your survey on REDCap. The system will automatically detect when you've submitted and proceed to the next stage.</p>
-              {isCheckingCompletion && (
-                <p className="text-sm text-gray-600 mt-2">Still checking for submission...</p>
-              )}
-            </div>
-            <AlertDialogFooter>
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setShowSubmissionModal(false);
-                  if (pollInterval) {
-                    clearInterval(pollInterval);
-                    setPollInterval(null);
-                  }
-                }}
-              >
-                Close
-              </Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
+
 
       <iframe
         src={session.post_link || session.start_link}
         className="h-full w-full"
       />
 
-      {sessionProgressData.remainingTimeSeconds <= 0 && !showSubmissionModal && (
+      {sessionProgressData.remainingTimeSeconds <= 0 && (
         <div className="fixed bottom-4 right-7 z-50">
-          <Button
-            onClick={() => {
-              setShowSubmissionModal(true);
-              startPolling();
-            }}
-            variant="default"
-            className="bg-slate-700 text-sm"
-          >
-            Check submission status
-          </Button>
+          <div className="bg-slate-700 text-white px-4 py-2 rounded-md shadow-lg flex items-center space-x-2">
+            {isCheckingCompletion ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+            ) : (
+              <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
+            )}
+            <span className="text-sm">Checking submission status...</span>
+          </div>
         </div>
       )}
     </>
