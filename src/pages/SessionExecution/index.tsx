@@ -13,7 +13,6 @@ import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { useSessionExecution } from "@/features/session-execution/hooks/useSessionExecution";
 import { usePreSessionChecks } from "@/features/pre-session-checks/hooks/usePreSessionChecks";
 import { Stage } from "@/features/session-execution/services/sessionExecutionService";
-import { useAuth } from "@/hooks/auth";
 
 export default function NextSession() {
   const sidebarRef = useRef<SidebarHandle>(null);
@@ -23,21 +22,18 @@ export default function NextSession() {
     sessionProgressData,
     hasNextSession,
     sessionHasEquipment,
-    startSession,
-    startHomework,
-    finishSession
+    startSession
   } = useSessionExecution();
 
   const {
     completedPreSessionChecks,
-    setCompletedPreSessionChecks
+    setCompletedPreSessionChecks,
+    goalPercentage,
+    setGoalPercentage,
   } = usePreSessionChecks();
 
-  const { authState } = useAuth();
-  const studentName = authState.session?.user.username;
-
   const handleStartSession = async () => {
-    await startSession();
+    await startSession(goalPercentage);
     sidebarRef.current?.autoCollapse();
   };
 
@@ -68,7 +64,10 @@ export default function NextSession() {
             </p>
             <PreSessionChecks
               session={nextSession}
-              completedCallback={() => setCompletedPreSessionChecks(true)}
+              completedCallback={(goal) => {
+                setCompletedPreSessionChecks(true);
+                setGoalPercentage(goal);
+              }}
             />
           </div>
         )}
@@ -103,8 +102,6 @@ export default function NextSession() {
               <ReadcompStage
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
-                onStartHomework={startHomework}
-                studentName={studentName}
               />
             )}
 
@@ -119,8 +116,6 @@ export default function NextSession() {
               <SurveyStage
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
-                onFinishSession={finishSession}
-                studentName={studentName}
               />
             )}
 

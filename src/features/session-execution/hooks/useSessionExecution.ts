@@ -86,7 +86,7 @@ export function useSessionExecution() {
         }
     }, [authState.session?.user.username, saveToLocalStorage]);
 
-    const startSession = useCallback(async () => {
+    const startSession = useCallback(async (goalPercentage?: number) => {
         if (!authState.session?.user.username || !nextSession || isTabMoved()) return;
 
         setSessionHasEquipment(nextSession && !nextSession.no_equipment);
@@ -94,6 +94,7 @@ export function useSessionExecution() {
         try {
             await sessionExecutionService.startSessionForStudent(
                 authState.session.user.username,
+                goalPercentage,
                 (progressData) => {
                     setSessionProgressData(progressData);
                     saveToLocalStorage(nextSession, [], true, progressData.stage, 1);
@@ -179,13 +180,31 @@ export function useSessionExecution() {
                         setSessionProgressData(progress);
 
                         saveToLocalStorage(student.active_session, [], true, progress.stage, 1);
+                    } else {
+                        // No active session on backend --> clear any "stale" localStorage
+                        const cachedData = getLocalStorage(Item.SESSION_EXECUTION_CACHE);
+                        if (cachedData) {
+                            try {
+                                const parsed: CachedSessionData = JSON.parse(cachedData);
+                                // If localStorage shows a session was started but backend says no active session,
+                                // it means that the session was finished while the frontend was closed
+                                if (parsed.sessionHasStarted) {
+                                    console.log("cleared stale localstorage");
+                                    removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
+                                    fetchNextSession();
+                                }
+                            } catch (error) {
+                                console.error("Error parsing cached session data:", error);
+                                removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
+                            }
+                        }
                     }
                 } catch (error) {
                     console.error("Error getting session state:", error);
                 }
             }
         })();
-    }, [authState.session?.user.username]);
+    }, [authState.session?.user.username, fetchNextSession]);
 
     return {
         nextSession,
