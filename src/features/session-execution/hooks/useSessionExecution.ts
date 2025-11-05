@@ -5,6 +5,7 @@ import { toast } from "react-toastify";
 import { getLocalStorage, setLocalStorage, removeLocalStorage, Item } from "@/lib/localstorage";
 
 interface CachedSessionData {
+    username: string;
     nextSession: Session | null;
     remainingSessions: Session[];
     sessionHasStarted: boolean;
@@ -33,16 +34,21 @@ export function useSessionExecution() {
         if (cachedData) {
             try {
                 const parsed: CachedSessionData = JSON.parse(cachedData);
-                setNextSession(parsed.nextSession);
-                setRemainingSessions(parsed.remainingSessions);
-                setSessionHasStarted(parsed.sessionHasStarted);
-                setHasNextSession(parsed.hasNextSession);
+                if (parsed.username === authState.session?.user.username) {
+                    setNextSession(parsed.nextSession);
+                    setRemainingSessions(parsed.remainingSessions);
+                    setSessionHasStarted(parsed.sessionHasStarted);
+                    setHasNextSession(parsed.hasNextSession);
+                } else {
+                    console.log("Clearing cache since it belongs to a different user");
+                    removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
+                }
             } catch (error) {
                 console.error("Error parsing cached session data:", error);
                 removeLocalStorage(Item.SESSION_EXECUTION_CACHE);
             }
         }
-    }, []);
+    }, [authState.session?.user.username]);
 
     const saveToLocalStorage = useCallback((
         nextSession: Session | null,
@@ -51,7 +57,10 @@ export function useSessionExecution() {
         stage: Stage | null,
         hasNextSession: number
     ) => {
+        if (!authState.session?.user.username) return;
+
         const stateToCache: CachedSessionData = {
+            username: authState.session.user.username,
             nextSession,
             remainingSessions,
             sessionHasStarted,
@@ -59,7 +68,7 @@ export function useSessionExecution() {
             hasNextSession
         };
         setLocalStorage(Item.SESSION_EXECUTION_CACHE, JSON.stringify(stateToCache));
-    }, []);
+    }, [authState.session?.user.username]);
 
     const fetchNextSession = useCallback(async () => {
         if (!authState.session?.user.username || isTabMoved()) return;
