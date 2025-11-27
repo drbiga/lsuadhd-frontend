@@ -277,7 +277,6 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   return (
     <>
       <Button
-        className="bg-neutral-200 text-neutral-800"
         onClick={() => {
           // If a tab has the autoclose parameter to mark a session as moved, 
           // they get redirected to base path before beginning a new session to prevent issues
@@ -289,7 +288,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
           setDialogIsOpen(true);
         }}
       >
-        Begin
+        Begin Pre-Session Checks
       </Button>
       <AlertDialog
         open={dialogIsOpen}

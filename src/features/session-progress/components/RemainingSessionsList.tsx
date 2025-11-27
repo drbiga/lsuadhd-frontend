@@ -12,7 +12,7 @@ export function RemainingSessionsList({ sessions, completedSessionsCount }: Rema
 
   if (sessions.length === 0) {
     return (
-      <h2 className="text-2xl text-slate-800 dark:text-slate-200 opacity-50">
+      <h2 className="text-xl text-muted-foreground">
         You don't have any remaining sessions left to do. Congratulations,
         you've done them all!!
       </h2>
@@ -21,29 +21,28 @@ export function RemainingSessionsList({ sessions, completedSessionsCount }: Rema
 
   return (
     <>
-      <h2 className="text-2xl text-slate-800 dark:text-slate-200 opacity-50">Remaining sessions</h2>
+    <div className="flex flex-col items-center">
+      <h2 className="text-2xl font-medium text-muted-foreground w-[70vw] mb-10 text-left">Remaining Sessions</h2>
       <ul className="flex flex-col gap-8 px-2">
         {sessions.map((session) => (
-          <li key={session.seqnum} className="bg-card p-4 h-[80vh] w-[70vw] rounded-lg flex relative">
-            <div className="w-[30%]">
-              <p className="text-2xl text-slate-700 dark:text-slate-300">
+          <li key={session.seqnum} className="bg-card border border-border p-6 h-[80vh] w-[70vw] rounded-xl flex relative shadow-sm">
+            <div className="w-[35%]">
+              <p className="text-2xl font-semibold text-foreground mb-2">
                 Session #{session.seqnum}
               </p>
-              <p className="text-sm text-slate-700 dark:text-slate-300">Upcoming...</p>
-              <p className="absolute top-4 right-4">
-                {session.seqnum === completedSessionsCount + 1 && (
-                  <Button
-                    className="bg-slate-300 dark:bg-slate-700 hover:bg-slate-700 hover:text-slate-100 dark:hover:bg-slate-400 dark:hover:text-slate-900 transition-all duration-100"
-                    onClick={() => navigate("/")}
-                  >
-                    Start next session
+              <p className="text-sm text-muted-foreground">Upcoming session</p>
+              {session.seqnum === completedSessionsCount + 1 && (
+                <div className="absolute top-6 right-6">
+                  <Button onClick={() => navigate("/")}>
+                    Start Session
                   </Button>
-                )}
-              </p>
+                </div>
+              )}
             </div>
           </li>
         ))}
       </ul>
+    </div>
     </>
   );
 }

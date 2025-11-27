@@ -40,7 +40,7 @@ export function SurveyStage({ session, sessionProgressData }: SurveyStageProps) 
                 <li>Scroll to the bottom of the survey</li>
                 <li>Click the <strong className="text-yellow-500 font-bold">Submit</strong> button to save your answers</li>
               </ol>
-              <p className="mt-4 text-sm text-gray-600">
+              <p className="mt-4 text-sm text-yellow-500">
                 The system will automatically detect when you've submitted and proceed to the next stage.
               </p>
             </div>

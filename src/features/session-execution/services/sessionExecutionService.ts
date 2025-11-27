@@ -111,10 +111,10 @@ class SessionExecutionService {
             response = await api.get(`/session_execution/student/${studentName}/remaining_sessions`);
         } catch (error) {
             if (error instanceof AxiosError) {
-                toast.error(error.response?.data.detail.exception)
+                console.error('Error getting remaining sessions:', error);
                 throw new Error(error.response?.data.detail.message);
             } else {
-                toast.error('There was a problem when getting your remaining sessions');
+                console.error('Error getting remaining sessions:', error);
                 throw new Error('There was a problem when getting your remaining sessions');
             }
         }

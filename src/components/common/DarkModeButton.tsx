@@ -1,33 +1,33 @@
-import { forwardRef, useCallback, useState } from "react";
+import { forwardRef, useCallback, useEffect, useState } from "react";
 import { Button } from "./Button";
 import { Moon, Sun } from "lucide-react";
 import { ButtonProps } from "../ui/button";
 
 export const DarkModeButton = forwardRef<HTMLButtonElement, ButtonProps>(function DarkModeButton({ className, ...rest }, _) {
     const [isDarkMode, setIsDarkMode] = useState(() => {
-        const html = document.getElementById('html');
-        if (html) {
-            return html.classList.contains('dark')
-        }
+        const html = document.documentElement;
+        return html.classList.contains('dark');
     });
 
-    const toggleDarkMode = useCallback(() => {
-        const html = document.getElementById('html');
+    useEffect(() => {
+        const html = document.documentElement;
         if (isDarkMode) {
-            html?.classList.remove('dark')
-            setIsDarkMode(false);
+            html.classList.add('dark');
         } else {
-            html?.classList.add('dark');
-            setIsDarkMode(true);
+            html.classList.remove('dark');
         }
-    }, [isDarkMode])
+    }, [isDarkMode]);
+
+    const toggleDarkMode = useCallback(() => {
+        setIsDarkMode(prev => !prev);
+    }, []);
 
     return (
-        <Button {...rest} className={className} type="button" onClick={() => toggleDarkMode()}>
+        <Button {...rest} className={className} type="button" onClick={toggleDarkMode}>
             {isDarkMode ? (
-                <Moon />
+                <Moon className="w-5 h-5" />
             ) : (
-                <Sun />
+                <Sun className="w-5 h-5" />
             )}
         </Button>
     )

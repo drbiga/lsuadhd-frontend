@@ -9,18 +9,18 @@ import { RouteNames } from "@/Routes";
 function SidebarLink({ active, collapsed, children, icon, to }: { active?: boolean; collapsed: boolean, icon: ReactNode, to: string, children: ReactNode }) {
     return (
         <li className={`
-            text-white hover:bg-slate-500
-            py-2 ${collapsed ? "px-2" : "px-8"}
-            rounded-md cursor-pointer
-            transition-all duration-100
-            ${active ? "bg-slate-500" : ""}
+            text-sidebar-foreground hover:bg-sidebar-hover
+            py-3 ${collapsed ? "px-3" : "px-6"}
+            rounded-lg cursor-pointer
+            transition-all duration-200
+            ${active ? "bg-sidebar-active shadow-sm" : ""}
             `
         }>
-            <Link to={to} state={{ collapsed }}>
+            <Link to={to} state={{ collapsed }} className="focus:outline-none focus:ring-2 focus:ring-accent rounded-lg">
                 {
                     collapsed
                         ? icon
-                        : <div className="flex items-center gap-2">{icon} {children}</div>
+                        : <div className="flex items-center gap-3 font-medium">{icon} {children}</div>
                 }
             </Link>
         </li >
@@ -46,12 +46,12 @@ const Sidebar = forwardRef<SidebarHandle>((_, ref) => {
 
     return (
         <div className={`
-            h-full bg-slate-700
+            h-full bg-sidebar border-r border-border
             flex flex-col items-center justify-between py-8
-            transition-all duration-100
+            transition-all duration-300 ease-in-out
             ${collapsed ? "w-[5vw]" : "w-[20vw]"}
         `}>
-            <ul className="flex flex-col justify-around gap-4 mt-16">
+            <ul className="flex flex-col justify-around gap-3 mt-16 w-full px-4">
                 {
                     <SidebarLink active={pathname === RouteNames.HOME} to={RouteNames.HOME} collapsed={collapsed} icon={<Target />}>
                         Next Session
@@ -62,14 +62,14 @@ const Sidebar = forwardRef<SidebarHandle>((_, ref) => {
                 }
             </ul>
 
-            <div className="text-white">
-                <div className={`mb-16 flex gap-2 ${collapsed ? "flex-col items-center" : "items-center"}`}>
-                    <DarkModeButton className="bg-slate-800 text-slate-200 hover:bg-slate-900 border-0" />
-                    <LogOutButton className="bg-slate-800 text-slate-200 hover:bg-slate-900 border-0" />
+            <div className="text-sidebar-foreground w-full px-4">
+                <div className={`mb-16 flex gap-2 ${collapsed ? "flex-col items-center" : "items-center justify-center"}`}>
+                    <DarkModeButton className="bg-sidebar-hover text-sidebar-foreground hover:bg-sidebar-active border-0" />
+                    <LogOutButton className="bg-sidebar-hover text-sidebar-foreground hover:bg-sidebar-active border-0" />
                 </div>
 
                 <div className="flex justify-center">
-                    <Button className="bg-slate-800 text-slate-200 hover:bg-slate-900 border-0" onClick={() => setCollapsed(!collapsed)}>
+                    <Button className="bg-sidebar-hover text-sidebar-foreground hover:bg-sidebar-active border-0" onClick={() => setCollapsed(!collapsed)}>
                         {collapsed ? (
                             <ChevronRight />
                         ) : (
