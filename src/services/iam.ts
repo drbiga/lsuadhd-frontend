@@ -65,6 +65,18 @@ class IamService {
         return response.data;
     }
 
+    public async isUserLocked(username: string): Promise<boolean> {
+        const response = await api.get(`/iam/user/${username}/locked`);
+        return response.data;
+    }
+
+    public async getLockedStatuses(usernames: string[]): Promise<Record<string, boolean>> {
+        const response = await api.get(`/iam/users/locked`, {
+            params: { usernames }
+        });
+        return response.data;
+    }
+
     // private async updateLocalServer() {
     //     while (!this.localServerUpToDate) {
     //         try {

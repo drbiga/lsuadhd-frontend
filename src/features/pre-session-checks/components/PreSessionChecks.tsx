@@ -17,6 +17,8 @@ import axios, { AxiosError } from "axios";
 import { useAuth } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
 import { Session } from "@/features/session-execution/services/sessionExecutionService";
+import { toast } from "react-toastify";
+import iamService from "@/services/iam";
 
 import {
   Dialog,
@@ -189,7 +191,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   const [showFeedbackSystemFix, setShowFeedbackSystemFix] = useState(false);
   const [savedGoalPercentage, setSavedGoalPercentage] = useState<number | undefined>(undefined);
 
-  const { initializeLocalServer } = useAuth();
+  const { initializeLocalServer, authState } = useAuth();
 
   const pingLocalServer = useCallback(async () => {
     setIsPingingLocal(true);
@@ -277,13 +279,23 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   return (
     <>
       <Button
-        onClick={() => {
+        onClick={async () => {
           // If a tab has the autoclose parameter to mark a session as moved, 
           // they get redirected to base path before beginning a new session to prevent issues
           if (new URLSearchParams(window.location.search).get('autoclose') === 'true') {
             window.location.href = window.location.origin + window.location.pathname;
             return;
           }
+          
+          const username = authState.session?.user.username;
+          if (username) {
+            const isLocked = await iamService.isUserLocked(username);
+            if (isLocked) {
+              toast.error("Please contact mcost16@lsu.edu with any questions. The feedback count in your last session was unusually low. Your account has been locked until the issue can be resolved by study coordinators.");
+              return;
+            }
+          }
+          
           dispatch({ type: "RESET" });
           setDialogIsOpen(true);
         }}
@@ -313,6 +325,21 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                     <span className="text-yellow-500 font-bold">Please ensure {session?.has_feedback ? 'all systems' : 'both the server and app'} are running. </span>
                     Refer to the indicators below for guidance.
                   </AlertDialogDescription>
+                  
+                  <div className="flex flex-col gap-4">
+                    <div className="flex justify-center">
+                      <img
+                        className="rounded-md shadow max-w-full"
+                        src="/cmd.png"
+                        alt="Command Prompt Window"
+                      />
+                    </div>
+                    <AlertDialogDescription className="text-center text-yellow-500 font-semibold">
+                      This is what the window looks like when the local server is running. 
+                      <span className="text-red-500"> Do NOT close this window during your session.</span>
+                    </AlertDialogDescription>
+                  </div>
+
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <span className={cn("w-3 h-3 rounded-full", localServerIsWorking ? "bg-green-600" : "bg-red-600")}></span>
