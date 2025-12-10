@@ -8,9 +8,9 @@ export function PageContainer({ children }: PropsWithChildren) {
     return (
         <div className="h-[100vh] w-[100vw] flex bg-background relative">
             {authState.isLoggedIn && user && (
-                <div className="absolute top-4 right-4 z-50 flex items-center gap-3">
-                    <div className="bg-card text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-600 rounded-2xl p-3">
-                        <p className="text-sm font-medium">Logged in as: <span className="text-yellow-500">{user.username}</span></p>
+                <div className="absolute top-6 right-6 z-50 flex items-center gap-3">
+                    <div className="bg-card text-foreground border border-border rounded-xl px-4 py-2.5 shadow-sm">
+                        <p className="text-sm font-medium">Logged in as <span className="text-accent font-semibold">{user.username}</span></p>
                     </div>
                 </div>
             )}
@@ -23,7 +23,7 @@ export function PageContainer({ children }: PropsWithChildren) {
 
 export function PageTitle({ children }: PropsWithChildren) {
     return (
-        <h1 className="text-4xl text-slate-800 dark:text-slate-200">{children}</h1>
+        <h1 className="text-4xl font-semibold text-foreground tracking-tight">{children}</h1>
     )
 }
 
@@ -35,5 +35,5 @@ export function PageMainContent({ children }: PropsWithChildren) {
 
 
 export function PageSectionTitle({ children }: PropsWithChildren) {
-    return <h2 className="text-slate-400 dark:text-slate-600 opacity-70 text-2xl mb-8">{children}</h2>
+    return <h2 className="text-muted-foreground text-2xl mb-8 font-medium">{children}</h2>
 }

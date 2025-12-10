@@ -109,7 +109,7 @@ export function SessionChart({ feedbacks }: SessionChartProps) {
   return (
     <div className="w-[70%]">
       {feedbacks.length === 0 ? (
-        <h2 className="text-xl relative top-[50%] text-slate-600 dark:text-slate-400">
+        <h2 className="text-xl relative top-[50%] text-muted-foreground">
           There were no feedbacks in this session. Is there something wrong?
         </h2>
       ) : (
@@ -145,11 +145,9 @@ function LineChartTooltip({
       throw Error("Something is wrong with the library");
     }
     return (
-      <div
-        className="p-2 rounded-md bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300 opacity-70"
-      >
-        <p>
-          Minute {label}: {v?.charAt(0).toUpperCase() + v?.slice(1)}
+      <div className="bg-card border border-border rounded-lg p-3 shadow-md">
+        <p className="text-sm text-foreground">
+          <span className="font-medium">Minute {label}:</span> {v?.charAt(0).toUpperCase() + v?.slice(1)}
         </p>
       </div>
     );

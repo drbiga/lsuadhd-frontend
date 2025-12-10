@@ -13,7 +13,6 @@ import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { useSessionExecution } from "@/features/session-execution/hooks/useSessionExecution";
 import { usePreSessionChecks } from "@/features/pre-session-checks/hooks/usePreSessionChecks";
 import { Stage } from "@/features/session-execution/services/sessionExecutionService";
-import { useAuth } from "@/hooks/auth";
 
 export default function NextSession() {
   const sidebarRef = useRef<SidebarHandle>(null);
@@ -23,21 +22,18 @@ export default function NextSession() {
     sessionProgressData,
     hasNextSession,
     sessionHasEquipment,
-    startSession,
-    startHomework,
-    finishSession
+    startSession
   } = useSessionExecution();
 
   const {
     completedPreSessionChecks,
-    setCompletedPreSessionChecks
+    setCompletedPreSessionChecks,
+    goalPercentage,
+    setGoalPercentage,
   } = usePreSessionChecks();
 
-  const { authState } = useAuth();
-  const studentName = authState.session?.user.username;
-
   const handleStartSession = async () => {
-    await startSession();
+    await startSession(goalPercentage);
     sidebarRef.current?.autoCollapse();
   };
 
@@ -59,17 +55,24 @@ export default function NextSession() {
       <div className="w-full h-full">
         {!completedPreSessionChecks && hasNextSession !== 0 && !sessionHasStarted && (
           <div className="h-full flex flex-col justify-center items-center">
-            <h2 className="text-3xl font-bold mb-1">Welcome</h2>
-            <p className="text-sm text-gray-600 mt-1">
-              <span className="font-medium">Up Next:</span> <span className="text-yellow-500 font-semibold">Session {nextSession?.seqnum}</span>
-            </p>
-            <p className="text-center m-4">
-              You are about to go through some pre-session checks. Please press begin.
-            </p>
-            <PreSessionChecks
-              session={nextSession}
-              completedCallback={() => setCompletedPreSessionChecks(true)}
-            />
+            <div className="text-center">
+              <h2 className="text-4xl font-bold mb-3 text-foreground">Welcome Back</h2>
+              <p className="text-base text-muted-foreground">
+                <span className="font-medium">Up Next:</span> <span className="text-accent font-semibold">Session {nextSession?.seqnum}</span>
+              </p>
+            </div>
+            <div className="rounded-xl p-6 max-w-md text-center">
+              <p className="text-foreground mb-6">
+                You are about to go through some pre-session checks. Please press begin when you're ready!
+              </p>
+              <PreSessionChecks
+                session={nextSession}
+                completedCallback={(goal) => {
+                  setCompletedPreSessionChecks(true);
+                  setGoalPercentage(goal);
+                }}
+              />
+            </div>
           </div>
         )}
 
@@ -103,8 +106,6 @@ export default function NextSession() {
               <ReadcompStage
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
-                onStartHomework={startHomework}
-                studentName={studentName}
               />
             )}
 
@@ -119,8 +120,6 @@ export default function NextSession() {
               <SurveyStage
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
-                onFinishSession={finishSession}
-                studentName={studentName}
               />
             )}
 
@@ -133,11 +132,12 @@ export default function NextSession() {
         )}
         {!sessionHasStarted && hasNextSession === 0 && (
           <div className="pl-16 pt-8">
-            <h2 className="text-3xl mb-8 font-bold">Congratulations! <span className="animate-bounce inline-block">🎉</span></h2>
-            <p>
-              It appears that you do not have any sessions left. Well done!
-              You've completed them all!
-            </p>
+            <div className="rounded-xl p-8 max-w-2xl">
+              <h2 className="text-3xl mb-4 font-bold text-foreground">Congratulations! <span className="animate-bounce inline-block">🎉</span></h2>
+              <p className="text-muted-foreground text-lg">
+                You have completed all of your sessions. Excellent work!
+              </p>
+            </div>
           </div>
         )}
       </div>

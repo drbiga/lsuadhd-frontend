@@ -1,82 +1,13 @@
 import { Session, SessionProgressData } from "@/features/session-execution/services/sessionExecutionService";
 import { Walkthrough, WalkthroughInstructionsDescription, WalkthroughInstructionsTitle } from "@/features/session-execution/components/Walkthrough";
-import { useState, useEffect } from "react";
-import { redcapService, SURVEY_NAMES } from "@/services/redcap";
+import { Loader2 } from "lucide-react";
 
 interface SurveyStageProps {
   session: Session;
   sessionProgressData: SessionProgressData;
-  onFinishSession?: () => void;
-  studentName?: string;
 }
 
-export function SurveyStage({ session, sessionProgressData, onFinishSession, studentName }: SurveyStageProps) {
-  const [isCheckingCompletion, setIsCheckingCompletion] = useState(false);
-  const [pollInterval, setPollInterval] = useState<NodeJS.Timeout | null>(null);
-
-  const getSurveyName = (): string => {
-    const seqNum = session.seqnum;
-    
-    switch (seqNum) {
-      case 1: return SURVEY_NAMES.POST1;
-      case 2: return SURVEY_NAMES.POST2;
-      case 3: return SURVEY_NAMES.POST3;
-      case 4: return SURVEY_NAMES.POST4;
-      case 5: return SURVEY_NAMES.POST5;
-      case 6: return SURVEY_NAMES.POST6;
-      case 7: return SURVEY_NAMES.POST7;
-      case 8: return SURVEY_NAMES.POST8;
-      case 9: return SURVEY_NAMES.POST9;
-      case 10: return SURVEY_NAMES.POST10;
-      case 11: return SURVEY_NAMES.POST11;
-      case 12: return SURVEY_NAMES.POST12;
-      default: return SURVEY_NAMES.POST1;
-    }
-  };
-
-  const checkSurveyCompletion = async () => {
-    try {
-      setIsCheckingCompletion(true);
-      const surveyName = getSurveyName();
-
-      const isCompleted = await redcapService.checkSurveyCompletion(studentName ?? "", surveyName);
-      
-      if (isCompleted) {
-        if (pollInterval) {
-          clearInterval(pollInterval);
-          setPollInterval(null);
-        }
-        if (onFinishSession) {
-          onFinishSession();
-        }
-      }
-    } catch (error) {
-      console.error('Could not check survey completion:', error);
-    } finally {
-      setIsCheckingCompletion(false);
-    }
-  };
-
-  const startPolling = () => {
-    checkSurveyCompletion();
-    
-    const interval = setInterval(checkSurveyCompletion, 10000);
-    setPollInterval(interval);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (pollInterval) {
-        clearInterval(pollInterval);
-      }
-    };
-  }, [pollInterval]);
-
-  useEffect(() => {
-    if (sessionProgressData.remainingTimeSeconds <= 0 && !pollInterval) {
-      startPolling();
-    }
-  }, [sessionProgressData.remainingTimeSeconds, pollInterval]);
+export function SurveyStage({ session, sessionProgressData }: SurveyStageProps) {
 
   return (
     <>
@@ -109,15 +40,13 @@ export function SurveyStage({ session, sessionProgressData, onFinishSession, stu
                 <li>Scroll to the bottom of the survey</li>
                 <li>Click the <strong className="text-yellow-500 font-bold">Submit</strong> button to save your answers</li>
               </ol>
-              <p className="text-sm text-yellow-500 font-bold mt-3">
-                The system will automatically detect your submission and proceed to the next stage.
+              <p className="mt-4 text-sm text-yellow-500">
+                The system will automatically detect when you've submitted and proceed to the next stage.
               </p>
             </div>
           </WalkthroughInstructionsDescription>
         </Walkthrough>
       )}
-
-
 
       <iframe
         src={session.post_link || session.start_link}
@@ -125,15 +54,9 @@ export function SurveyStage({ session, sessionProgressData, onFinishSession, stu
       />
 
       {sessionProgressData.remainingTimeSeconds <= 0 && (
-        <div className="fixed bottom-4 right-7 z-50">
-          <div className="bg-slate-700 text-white px-4 py-2 rounded-md shadow-lg flex items-center space-x-2">
-            {isCheckingCompletion ? (
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
-            ) : (
-              <div className="w-4 h-4 rounded-full bg-yellow-500"></div>
-            )}
-            <span className="text-sm">Checking submission status...</span>
-          </div>
+        <div className="fixed bottom-4 right-4 bg-card border border-slate-300 dark:border-slate-600 text-slate-800 dark:text-slate-200 px-4 py-2 rounded-lg shadow-lg flex items-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          <span className="text-sm font-medium">Checking survey submission...</span>
         </div>
       )}
     </>

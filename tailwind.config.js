@@ -51,6 +51,12 @@ module.exports = {
           DEFAULT: "var(--card)",
           foreground: "var(--card-foreground)",
         },
+        sidebar: {
+          DEFAULT: "var(--sidebar)",
+          foreground: "var(--sidebar-foreground)",
+          hover: "var(--sidebar-hover)",
+          active: "var(--sidebar-active)",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
