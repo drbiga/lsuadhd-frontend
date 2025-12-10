@@ -4,7 +4,7 @@ import sessionExecutionService from "@/features/session-execution/services/sessi
 
 export function usePreSessionChecks() {
     const [completedPreSessionChecks, setCompletedPreSessionChecks] = useState(false);
-    const [goalPercentage, setGoalPercentage] = useState<number | undefined>(undefined);
+    // const [goalPercentage, setGoalPercentage] = useState<number | undefined>(undefined);
     const { authState } = useAuth();
 
     useEffect(() => {
@@ -27,7 +27,7 @@ export function usePreSessionChecks() {
     return {
         completedPreSessionChecks,
         setCompletedPreSessionChecks,
-        goalPercentage,
-        setGoalPercentage,
+        // goalPercentage,
+        // setGoalPercentage,
     };
 }

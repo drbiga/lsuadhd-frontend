@@ -28,12 +28,12 @@ export default function NextSession() {
   const {
     completedPreSessionChecks,
     setCompletedPreSessionChecks,
-    goalPercentage,
-    setGoalPercentage,
+    // goalPercentage,
+    // setGoalPercentage,
   } = usePreSessionChecks();
 
   const handleStartSession = async () => {
-    await startSession(goalPercentage);
+    await startSession(/* goalPercentage */);
     sidebarRef.current?.autoCollapse();
   };
 
@@ -67,9 +67,9 @@ export default function NextSession() {
               </p>
               <PreSessionChecks
                 session={nextSession}
-                completedCallback={(goal) => {
+                completedCallback={(/* goal */) => {
                   setCompletedPreSessionChecks(true);
-                  setGoalPercentage(goal);
+                  // setGoalPercentage(goal);
                 }}
               />
             </div>

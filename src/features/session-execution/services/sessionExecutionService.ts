@@ -121,13 +121,13 @@ class SessionExecutionService {
         return response.data;
     }
 
-    public async startSessionForStudent(studentName: string, goalPercentage: number | undefined, updateCallback: (sessionProgressData: SessionProgressData) => void): Promise<Session> {
+    public async startSessionForStudent(studentName: string, /* goalPercentage: number | undefined */ _goalPercentage: number | undefined, updateCallback: (sessionProgressData: SessionProgressData) => void): Promise<Session> {
         try {
-            const response = await api.post(`/session_execution/student/${studentName}/session`, {}, {
+            const response = await api.post(`/session_execution/student/${studentName}/session` /* , {}, {
                 params: {
                     goal_percentage: goalPercentage
                 }
-            });
+            } */);
 
             this.websocket = createWebSocket(studentName);
             this.websocket.addEventListener('message', (event) => {
