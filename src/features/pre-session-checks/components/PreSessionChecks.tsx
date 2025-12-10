@@ -34,7 +34,7 @@ export type PreSessionChecksSteps =
   | { type: "HEADPHONE_CHECK" }
   | { type: "VR_MODE_PASSTHROUGH" }
   | { type: "AUDIO_CUE"; answer: string; cue: string; error?: string }
-  | { type: "GOAL_SETTING"; goalPercentage: number }
+  // | { type: "GOAL_SETTING"; goalPercentage: number }
   | { type: "CONFIRMATION" }
   | { type: "DONE" };
 
@@ -44,7 +44,7 @@ export type Action =
   | { type: "VALIDATE_CUE" }
   | { type: "FINISH" }
   | { type: "CHANGE_CUE" }
-  | { type: "SET_GOAL_PERCENTAGE"; goalPercentage: number }
+  // | { type: "SET_GOAL_PERCENTAGE"; goalPercentage: number }
   | { type: "RESET" };
 
 export function checksReducer(
@@ -99,7 +99,8 @@ export function checksReducer(
         return { ...state, answer: action.answer };
       if (action.type === "VALIDATE_CUE") {
         return state.answer === state.cue
-          ? { type: "GOAL_SETTING", goalPercentage: 50 }
+          // ? { type: "GOAL_SETTING", goalPercentage: 50 }
+          ? { type: "CONFIRMATION" }
           : { ...state, error: "Invalid answer" };
       }
       if (action.type === "CHANGE_CUE") {
@@ -111,12 +112,12 @@ export function checksReducer(
         };
       }
       break;
-    case "GOAL_SETTING":
-      if (action.type === "SET_GOAL_PERCENTAGE")
-        return { ...state, goalPercentage: action.goalPercentage };
-      if (action.type === "NEXT")
-        return { type: "CONFIRMATION" };
-      break;
+    // case "GOAL_SETTING":
+    //   if (action.type === "SET_GOAL_PERCENTAGE")
+    //     return { ...state, goalPercentage: action.goalPercentage };
+    //   if (action.type === "NEXT")
+    //     return { type: "CONFIRMATION" };
+    //   break;
     case "CONFIRMATION":
       if (action.type === "FINISH") return { type: "DONE" };
       break;
@@ -189,7 +190,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   const [showLocalServerFix, setShowLocalServerFix] = useState(false);
   const [showPersonalAnalyticsFix, setShowPersonalAnalyticsFix] = useState(false);
   const [showFeedbackSystemFix, setShowFeedbackSystemFix] = useState(false);
-  const [savedGoalPercentage, setSavedGoalPercentage] = useState<number | undefined>(undefined);
+  // const [savedGoalPercentage, setSavedGoalPercentage] = useState<number | undefined>(undefined);
 
   const { initializeLocalServer, authState } = useAuth();
 
@@ -434,7 +435,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                 </AlertDialogDescription>
               </>
             )}
-            {state.type === "GOAL_SETTING" && (
+            {/* {state.type === "GOAL_SETTING" && (
               <>
                 <AlertDialogTitle>Set Focus Goal</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -442,7 +443,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                   <span className="text-yellow-500 font-bold">Please provide an honest answer.</span>
                 </AlertDialogDescription>
               </>
-            )}
+            )} */}
             {state.type === "CONFIRMATION" && (
               <>
                 <AlertDialogTitle>Success!</AlertDialogTitle>
@@ -471,7 +472,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
             </>
           )}
 
-          {state.type === "GOAL_SETTING" && (
+          {/* {state.type === "GOAL_SETTING" && (
             <div className="flex flex-col gap-2">
               <label htmlFor="goal-percentage" className="text-sm font-medium text-white">
                 Focus Goal Percentage:
@@ -491,7 +492,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                 ))}
               </select>
             </div>
-          )}
+          )} */}
 
           <AlertDialogFooter>
             {state.type !== "DONE" && (
@@ -609,7 +610,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
               </div>
             )}
 
-            {state.type === "GOAL_SETTING" && (
+            {/* {state.type === "GOAL_SETTING" && (
               <Button
                 variant="outline"
                 onClick={() => {
@@ -619,14 +620,14 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
               >
                 Continue
               </Button>
-            )}
+            )} */}
 
             {state.type === "CONFIRMATION" && (
               <AlertDialogAction
                 onClick={() => {
                   dispatch({ type: "FINISH" });
                   setDialogIsOpen(false);
-                  completedCallback(savedGoalPercentage);
+                  completedCallback(/* savedGoalPercentage */ undefined);
                 }}
               >
                 Close

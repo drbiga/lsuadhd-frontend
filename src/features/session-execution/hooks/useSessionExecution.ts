@@ -95,7 +95,7 @@ export function useSessionExecution() {
         }
     }, [authState.session?.user.username, saveToLocalStorage]);
 
-    const startSession = useCallback(async (goalPercentage?: number) => {
+    const startSession = useCallback(async (/* goalPercentage?: number */) => {
         if (!authState.session?.user.username || !nextSession || isTabMoved()) return;
 
         setSessionHasEquipment(nextSession && !nextSession.no_equipment);
@@ -103,7 +103,7 @@ export function useSessionExecution() {
         try {
             await sessionExecutionService.startSessionForStudent(
                 authState.session.user.username,
-                goalPercentage,
+                /* goalPercentage */ undefined,
                 (progressData) => {
                     setSessionProgressData(progressData);
                     saveToLocalStorage(nextSession, [], true, progressData.stage, 1);
