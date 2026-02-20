@@ -35,6 +35,7 @@ export type PreSessionChecksSteps =
   | { type: "VR_MODE_PASSTHROUGH" }
   | { type: "AUDIO_CUE"; answer: string; cue: string; error?: string }
   // | { type: "GOAL_SETTING"; goalPercentage: number }
+  | { type: 'ENVIRONMENT_CHECK' }
   | { type: "CONFIRMATION" }
   | { type: "DONE" };
 
@@ -50,7 +51,7 @@ export type Action =
 export function checksReducer(
   state: PreSessionChecksSteps,
   action: Action,
-  session: Session | null = null
+  session: Session | null = null,
 ): PreSessionChecksSteps {
   const availableCues = ["dog", "ice cream", "laboratory"];
 
@@ -62,6 +63,7 @@ export function checksReducer(
 
   switch (action.type) {
     case "RESET":
+      // TODO: revert back to WELCOME state
       return { type: "WELCOME" };
   }
 
@@ -100,7 +102,7 @@ export function checksReducer(
       if (action.type === "VALIDATE_CUE") {
         return state.answer === state.cue
           // ? { type: "GOAL_SETTING", goalPercentage: 50 }
-          ? { type: "CONFIRMATION" }
+          ? { type: "ENVIRONMENT_CHECK" }
           : { ...state, error: "Invalid answer" };
       }
       if (action.type === "CHANGE_CUE") {
@@ -118,6 +120,9 @@ export function checksReducer(
     //   if (action.type === "NEXT")
     //     return { type: "CONFIRMATION" };
     //   break;
+    case 'ENVIRONMENT_CHECK':
+      if (action.type === 'NEXT') return { type: 'CONFIRMATION' }
+      break;
     case "CONFIRMATION":
       if (action.type === "FINISH") return { type: "DONE" };
       break;
@@ -171,9 +176,10 @@ const FixDialog = ({
 export type PreSessionChecksProps = {
   completedCallback: (goalPercentage?: number) => void;
   session: Session | null;
+  studentGroupEnvironment: string;
 };
 
-export function PreSessionChecks({ completedCallback, session }: PreSessionChecksProps) {
+export function PreSessionChecks({ completedCallback, session, studentGroupEnvironment }: PreSessionChecksProps) {
   const [state, dispatch] = useReducer(
     (state: PreSessionChecksSteps, action: Action) => checksReducer(state, action, session),
     { type: "WELCOME" }
@@ -255,7 +261,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   }, []);
 
   const isPinging = isPingingLocal || isPingingPersonal || (session?.has_feedback ? isPingingFeedback : false);
-  
+
   useEffect(() => {
     pingLocalServer();
     pingPersonalAnalytics();
@@ -287,7 +293,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
             window.location.href = window.location.origin + window.location.pathname;
             return;
           }
-          
+
           const username = authState.session?.user.username;
           if (username) {
             const isLocked = await iamService.isUserLocked(username);
@@ -296,7 +302,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
               return;
             }
           }
-          
+
           dispatch({ type: "RESET" });
           setDialogIsOpen(true);
         }}
@@ -326,7 +332,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                     <span className="text-yellow-500 font-bold">Please ensure {session?.has_feedback ? 'all systems' : 'both the server and app'} are running. </span>
                     Refer to the indicators below for guidance.
                   </AlertDialogDescription>
-                  
+
                   <div className="flex flex-col gap-4">
                     <div className="flex justify-center">
                       <img
@@ -336,7 +342,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                       />
                     </div>
                     <AlertDialogDescription className="text-center text-yellow-500 font-semibold">
-                      This is what the window looks like when the local server is running. 
+                      This is what the window looks like when the local server is running.
                       <span className="text-red-500"> Do NOT close this window during your session.</span>
                     </AlertDialogDescription>
                   </div>
@@ -444,6 +450,27 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                 </AlertDialogDescription>
               </>
             )} */}
+            {state.type === 'ENVIRONMENT_CHECK' && (
+              <>
+                <AlertDialogTitle>Environment Check</AlertDialogTitle>
+                <AlertDialogDescription className="flex flex-col gap-4">
+                  <p className="text-yellow-400">Your group is {studentGroupEnvironment}</p>
+                  {studentGroupEnvironment === 'Passthrough' && (
+                    <p>This means that you <b className="text-yellow-400">MUST</b> see your surroundings, the "real world"</p>
+                  )}
+                  {['VR Feedback', 'VR Only'].includes(studentGroupEnvironment) && (
+                    <p>This means that you <b className="text-yellow-400">MUST</b> see a virtual environment, a natural landscape, instead of the "real world" surroundings.</p>
+                  )}
+                  {!['VR Feedback', 'VR Only', 'Passthrough'].includes(studentGroupEnvironment) && (
+                    <p>
+                      There seems to be an issue with your group.
+                      Please contact mcost16@lsu.edu and send a screenshot of the current
+                      page and be sure to include your group in the picture
+                    </p>
+                  )}
+                </AlertDialogDescription>
+              </>
+            )}
             {state.type === "CONFIRMATION" && (
               <>
                 <AlertDialogTitle>Success!</AlertDialogTitle>
@@ -495,7 +522,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
           )} */}
 
           <AlertDialogFooter>
-            {state.type !== "DONE" && (
+            {!['CONFIRMATION', 'DONE'].includes(state.type) && (
               <div className="w-full flex justify-start">
                 <Button
                   variant="link"
@@ -622,6 +649,14 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
               </Button>
             )} */}
 
+            {state.type === 'ENVIRONMENT_CHECK' && (
+              <Button
+                onClick={() => { dispatch({ type: 'NEXT' }); }}
+              >
+                Continue
+              </Button>
+            )}
+
             {state.type === "CONFIRMATION" && (
               <AlertDialogAction
                 onClick={() => {
@@ -637,21 +672,21 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
         </AlertDialogContent>
       </AlertDialog>
 
-      <FixDialog 
-        isOpen={showLocalServerFix} 
+      <FixDialog
+        isOpen={showLocalServerFix}
         onClose={() => setShowLocalServerFix(false)}
         title="Fix Local Server"
       >
         <img
-            className="rounded-md shadow"
-            src="/cmd.png"
-            alt="Local Server"
+          className="rounded-md shadow"
+          src="/cmd.png"
+          alt="Local Server"
         />
 
         <DialogDescription>
-          The local server (shown above) acts as an intermediary app that runs in the background, 
+          The local server (shown above) acts as an intermediary app that runs in the background,
           managing communications between the laptop, the browser, and our servers.
-          If the Local Server is currently running, please close the command prompt window. 
+          If the Local Server is currently running, please close the command prompt window.
           Then, double-click the "Open this first" shortcut on the desktop to restart the local server.
           Wait a few seconds and click "Click to Verify Again" to check the status.
         </DialogDescription>
@@ -660,8 +695,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
         </DialogDescription>
       </FixDialog>
 
-      <FixDialog 
-        isOpen={showPersonalAnalyticsFix} 
+      <FixDialog
+        isOpen={showPersonalAnalyticsFix}
         onClose={() => setShowPersonalAnalyticsFix(false)}
         title="Fix Personal Analytics App"
       >
@@ -691,8 +726,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
 
         <DialogDescription>
           If the Personal Analytics app is currently running, please close it completely.
-          <span className="text-yellow-500"> Please use the scrollbar above to view the instructions 
-          for closing the PersonalAnalytics app. </span>
+          <span className="text-yellow-500"> Please use the scrollbar above to view the instructions
+            for closing the PersonalAnalytics app. </span>
           Then, restart the app using the provided executable file (.exe).
           Wait a few seconds and click "Click to Verify Again" to check the status.
         </DialogDescription>
@@ -701,8 +736,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
         </DialogDescription>
       </FixDialog>
 
-      <FixDialog 
-        isOpen={showFeedbackSystemFix} 
+      <FixDialog
+        isOpen={showFeedbackSystemFix}
         onClose={() => setShowFeedbackSystemFix(false)}
         title="Fix Stoplight Feedback System"
       >
@@ -714,8 +749,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
           />
         </div>
         <DialogDescription>
-          The stoplight app should be centered at the top of each display used by the computer. 
-          If it appears to be open, please close it completely (as indicated by the image). Then, 
+          The stoplight app should be centered at the top of each display used by the computer.
+          If it appears to be open, please close it completely (as indicated by the image). Then,
           re-open the Stoplight executable (.exe) file once more.
           Wait a few seconds and click "Click to Verify Again" to check the status.
         </DialogDescription>
