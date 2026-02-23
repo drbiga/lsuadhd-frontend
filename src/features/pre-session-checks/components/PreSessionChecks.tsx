@@ -35,7 +35,8 @@ export type PreSessionChecksSteps =
   | { type: "VR_MODE_PASSTHROUGH" }
   | { type: "AUDIO_CUE"; answer: string; cue: string; error?: string }
   // | { type: "GOAL_SETTING"; goalPercentage: number }
-  | { type: 'ENVIRONMENT_CHECK' }
+  | { type: 'ENVIRONMENT_CHECK', correctEnvironment: string, currentEnvironment: string }
+  | { type: 'ENVIRONMENT_FIX' }
   | { type: "CONFIRMATION" }
   | { type: "DONE" };
 
@@ -46,6 +47,8 @@ export type Action =
   | { type: "FINISH" }
   | { type: "CHANGE_CUE" }
   // | { type: "SET_GOAL_PERCENTAGE"; goalPercentage: number }
+  | { type: 'SET_CURRENT_ENVIRONMENT', correctEnvironment: string, currentEnvironment }
+  | { type: 'FIX_ENVIRONMENT' }
   | { type: "RESET" };
 
 export function checksReducer(
@@ -102,7 +105,7 @@ export function checksReducer(
       if (action.type === "VALIDATE_CUE") {
         return state.answer === state.cue
           // ? { type: "GOAL_SETTING", goalPercentage: 50 }
-          ? { type: "ENVIRONMENT_CHECK" }
+          ? { type: "ENVIRONMENT_CHECK", correctEnvironment: '', currentEnvironment: '' }
           : { ...state, error: "Invalid answer" };
       }
       if (action.type === "CHANGE_CUE") {
@@ -121,7 +124,25 @@ export function checksReducer(
     //     return { type: "CONFIRMATION" };
     //   break;
     case 'ENVIRONMENT_CHECK':
-      if (action.type === 'NEXT') return { type: 'CONFIRMATION' }
+      if (action.type === 'SET_CURRENT_ENVIRONMENT') {
+        return { ...state, correctEnvironment: action.correctEnvironment, currentEnvironment: action.currentEnvironment }
+      }
+      if (action.type === 'NEXT') {
+        if (state.correctEnvironment === '' || state.currentEnvironment === '') {
+          toast('The continue button was pressed before setting the correct and current environments. Please let mcost16@lsu.edu know about this issue before proceeding')
+        }
+        if (state.correctEnvironment === 'Passthrough' && state.currentEnvironment === 'Passthrough') {
+          return { type: 'CONFIRMATION' }
+        }
+        if (state.correctEnvironment.startsWith("VR") && state.currentEnvironment.startsWith("VR")) {
+          return { type: 'CONFIRMATION' }
+        }
+        return { type: 'ENVIRONMENT_FIX' }
+      }
+      break;
+    case 'ENVIRONMENT_FIX':
+      if (action.type === 'FIX_ENVIRONMENT')
+        return { type: 'ENVIRONMENT_CHECK', correctEnvironment: '', currentEnvironment: '' }
       break;
     case "CONFIRMATION":
       if (action.type === "FINISH") return { type: "DONE" };
@@ -197,6 +218,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
   const [showPersonalAnalyticsFix, setShowPersonalAnalyticsFix] = useState(false);
   const [showFeedbackSystemFix, setShowFeedbackSystemFix] = useState(false);
   // const [savedGoalPercentage, setSavedGoalPercentage] = useState<number | undefined>(undefined);
+  const [currentEnvironment, setCurrentEnvironment] = useState("");
 
   const { initializeLocalServer, authState } = useAuth();
 
@@ -468,6 +490,41 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                       page and be sure to include your group in the picture
                     </p>
                   )}
+                  <p>You can try to fix this issue by selecting the screenshot below that resembles what you are seeing the most:</p>
+                  <div className="grid gap-4">
+                    <img
+                      className={cn(currentEnvironment === 'vr' ? 'border-4 border-yellow-400' : "")}
+                      height={300}
+                      src="/vr.png"
+                      alt=""
+                      onClick={() => {
+                        setCurrentEnvironment('vr');
+                        dispatch({ type: 'SET_CURRENT_ENVIRONMENT', correctEnvironment: studentGroupEnvironment, currentEnvironment: 'VR' })
+                      }}
+                    />
+                    <img
+                      className={cn(currentEnvironment === 'p' ? 'border-4 border-yellow-400' : "")}
+                      height={300}
+                      src="/p.png"
+                      alt=""
+                      onClick={() => {
+                        setCurrentEnvironment('p');
+                        dispatch({ type: 'SET_CURRENT_ENVIRONMENT', correctEnvironment: studentGroupEnvironment, currentEnvironment: 'Passthrough' })
+                      }}
+                    />
+                  </div>
+                </AlertDialogDescription>
+              </>
+            )}
+            {state.type === 'ENVIRONMENT_FIX' && (
+              <>
+                <AlertDialogTitle>Fix Your Environment</AlertDialogTitle>
+                <AlertDialogDescription className="grid gap-4 justify-center items-center">
+                  <p>It seems your environment is wrong.</p>
+                  <p>Please watch this video to see how to fix it, and remember that your group is <b className="text-yellow-400">{studentGroupEnvironment}</b></p>
+                  <iframe width="100%" height="315"
+                    src="https://www.youtube.com/embed/I1Sa5IXO6pE?t=10">
+                  </iframe>
                 </AlertDialogDescription>
               </>
             )}
@@ -652,8 +709,17 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
             {state.type === 'ENVIRONMENT_CHECK' && (
               <Button
                 onClick={() => { dispatch({ type: 'NEXT' }); }}
+                disabled={currentEnvironment === ''}
               >
                 Continue
+              </Button>
+            )}
+
+            {state.type === 'ENVIRONMENT_FIX' && (
+              <Button
+                onClick={() => dispatch({ type: 'FIX_ENVIRONMENT' })}
+              >
+                I have fixed it!
               </Button>
             )}
 
