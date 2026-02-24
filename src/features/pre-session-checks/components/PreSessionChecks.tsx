@@ -32,9 +32,11 @@ export type PreSessionChecksSteps =
   | { type: "WELCOME" }
   | { type: "SUPPORTING_APPS" }
   | { type: "HEADPHONE_CHECK" }
-  | { type: "VR_MODE_PASSTHROUGH" }
+  // | { type: "VR_MODE_PASSTHROUGH" }
   | { type: "AUDIO_CUE"; answer: string; cue: string; error?: string }
   // | { type: "GOAL_SETTING"; goalPercentage: number }
+  | { type: 'ENVIRONMENT_CHECK', correctEnvironment: string, currentEnvironment: string }
+  | { type: 'ENVIRONMENT_FIX' }
   | { type: "CONFIRMATION" }
   | { type: "DONE" };
 
@@ -45,12 +47,14 @@ export type Action =
   | { type: "FINISH" }
   | { type: "CHANGE_CUE" }
   // | { type: "SET_GOAL_PERCENTAGE"; goalPercentage: number }
+  | { type: 'SET_CURRENT_ENVIRONMENT', correctEnvironment: string, currentEnvironment }
+  | { type: 'FIX_ENVIRONMENT' }
   | { type: "RESET" };
 
 export function checksReducer(
   state: PreSessionChecksSteps,
   action: Action,
-  session: Session | null = null
+  session: Session | null = null,
 ): PreSessionChecksSteps {
   const availableCues = ["dog", "ice cream", "laboratory"];
 
@@ -62,6 +66,7 @@ export function checksReducer(
 
   switch (action.type) {
     case "RESET":
+      // TODO: revert back to WELCOME state
       return { type: "WELCOME" };
   }
 
@@ -79,28 +84,25 @@ export function checksReducer(
       break;
     case "HEADPHONE_CHECK":
       if (action.type === "NEXT") {
-        if (!session?.is_passthrough) {
-          const firstCue =
-            availableCues[Math.floor(Math.random() * availableCues.length)];
-          return { type: "AUDIO_CUE", answer: "", cue: firstCue };
-        }
-        return { type: "VR_MODE_PASSTHROUGH" };
-      }
-      break;
-    case "VR_MODE_PASSTHROUGH":
-      if (action.type === "NEXT") {
         const firstCue =
           availableCues[Math.floor(Math.random() * availableCues.length)];
         return { type: "AUDIO_CUE", answer: "", cue: firstCue };
       }
       break;
+    // case "VR_MODE_PASSTHROUGH":
+    //   if (action.type === "NEXT") {
+    //     const firstCue =
+    //       availableCues[Math.floor(Math.random() * availableCues.length)];
+    //     return { type: "AUDIO_CUE", answer: "", cue: firstCue };
+    //   }
+    //   break;
     case "AUDIO_CUE":
       if (action.type === "SET_AUDIO_CUE")
         return { ...state, answer: action.answer };
       if (action.type === "VALIDATE_CUE") {
         return state.answer === state.cue
           // ? { type: "GOAL_SETTING", goalPercentage: 50 }
-          ? { type: "CONFIRMATION" }
+          ? { type: "ENVIRONMENT_CHECK", correctEnvironment: '', currentEnvironment: '' }
           : { ...state, error: "Invalid answer" };
       }
       if (action.type === "CHANGE_CUE") {
@@ -118,6 +120,27 @@ export function checksReducer(
     //   if (action.type === "NEXT")
     //     return { type: "CONFIRMATION" };
     //   break;
+    case 'ENVIRONMENT_CHECK':
+      if (action.type === 'SET_CURRENT_ENVIRONMENT') {
+        return { ...state, correctEnvironment: action.correctEnvironment, currentEnvironment: action.currentEnvironment }
+      }
+      if (action.type === 'NEXT') {
+        if (state.correctEnvironment === '' || state.currentEnvironment === '') {
+          toast('The continue button was pressed before setting the correct and current environments. Please let mcost16@lsu.edu know about this issue before proceeding')
+        }
+        if (state.correctEnvironment === 'Passthrough' && state.currentEnvironment === 'Passthrough') {
+          return { type: 'CONFIRMATION' }
+        }
+        if (state.correctEnvironment.startsWith("VR") && state.currentEnvironment.startsWith("VR")) {
+          return { type: 'CONFIRMATION' }
+        }
+        return { type: 'ENVIRONMENT_FIX' }
+      }
+      break;
+    case 'ENVIRONMENT_FIX':
+      if (action.type === 'FIX_ENVIRONMENT')
+        return { type: 'ENVIRONMENT_CHECK', correctEnvironment: '', currentEnvironment: '' }
+      break;
     case "CONFIRMATION":
       if (action.type === "FINISH") return { type: "DONE" };
       break;
@@ -171,9 +194,10 @@ const FixDialog = ({
 export type PreSessionChecksProps = {
   completedCallback: (goalPercentage?: number) => void;
   session: Session | null;
+  studentGroupEnvironment: string;
 };
 
-export function PreSessionChecks({ completedCallback, session }: PreSessionChecksProps) {
+export function PreSessionChecks({ completedCallback, session, studentGroupEnvironment }: PreSessionChecksProps) {
   const [state, dispatch] = useReducer(
     (state: PreSessionChecksSteps, action: Action) => checksReducer(state, action, session),
     { type: "WELCOME" }
@@ -191,6 +215,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   const [showPersonalAnalyticsFix, setShowPersonalAnalyticsFix] = useState(false);
   const [showFeedbackSystemFix, setShowFeedbackSystemFix] = useState(false);
   // const [savedGoalPercentage, setSavedGoalPercentage] = useState<number | undefined>(undefined);
+  const [currentEnvironment, setCurrentEnvironment] = useState("");
 
   const { initializeLocalServer, authState } = useAuth();
 
@@ -255,7 +280,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
   }, []);
 
   const isPinging = isPingingLocal || isPingingPersonal || (session?.has_feedback ? isPingingFeedback : false);
-  
+
   useEffect(() => {
     pingLocalServer();
     pingPersonalAnalytics();
@@ -287,7 +312,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
             window.location.href = window.location.origin + window.location.pathname;
             return;
           }
-          
+
           const username = authState.session?.user.username;
           if (username) {
             const isLocked = await iamService.isUserLocked(username);
@@ -296,7 +321,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
               return;
             }
           }
-          
+
           dispatch({ type: "RESET" });
           setDialogIsOpen(true);
         }}
@@ -326,7 +351,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                     <span className="text-yellow-500 font-bold">Please ensure {session?.has_feedback ? 'all systems' : 'both the server and app'} are running. </span>
                     Refer to the indicators below for guidance.
                   </AlertDialogDescription>
-                  
+
                   <div className="flex flex-col gap-4">
                     <div className="flex justify-center">
                       <img
@@ -336,7 +361,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                       />
                     </div>
                     <AlertDialogDescription className="text-center text-yellow-500 font-semibold">
-                      This is what the window looks like when the local server is running. 
+                      This is what the window looks like when the local server is running.
                       <span className="text-red-500"> Do NOT close this window during your session.</span>
                     </AlertDialogDescription>
                   </div>
@@ -416,7 +441,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                 </div>
               </>
             )}
-            {state.type === "VR_MODE_PASSTHROUGH" && (
+            {/* {state.type === "VR_MODE_PASSTHROUGH" && (
               <>
                 <AlertDialogTitle>Setting VR mode to Passthrough</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -426,7 +451,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                   passthrough before continuing.
                 </AlertDialogDescription>
               </>
-            )}
+            )} */}
             {state.type === "AUDIO_CUE" && (
               <>
                 <AlertDialogTitle>Final Audio Check: Please enter the audio cue</AlertDialogTitle>
@@ -444,6 +469,62 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
                 </AlertDialogDescription>
               </>
             )} */}
+            {state.type === 'ENVIRONMENT_CHECK' && (
+              <>
+                <AlertDialogTitle>Environment Check</AlertDialogTitle>
+                <AlertDialogDescription className="flex flex-col gap-4">
+                  <p className="text-yellow-400">Your group is {studentGroupEnvironment}</p>
+                  {studentGroupEnvironment === 'Passthrough' && (
+                    <p>This means that you <b className="text-yellow-400">MUST</b> see your surroundings, the "real world"</p>
+                  )}
+                  {['VR Feedback', 'VR Only'].includes(studentGroupEnvironment) && (
+                    <p>This means that you <b className="text-yellow-400">MUST</b> see a virtual environment, a natural landscape, instead of the "real world" surroundings.</p>
+                  )}
+                  {!['VR Feedback', 'VR Only', 'Passthrough'].includes(studentGroupEnvironment) && (
+                    <p>
+                      There seems to be an issue with your group.
+                      Please contact mcost16@lsu.edu and send a screenshot of the current
+                      page and be sure to include your group in the picture
+                    </p>
+                  )}
+                  <p>You can try to fix this issue by selecting the screenshot below that resembles what you are seeing the most:</p>
+                  <div className="grid gap-4">
+                    <img
+                      className={cn(currentEnvironment === 'vr' ? 'border-4 border-yellow-400' : "")}
+                      height={300}
+                      src="/vr.png"
+                      alt=""
+                      onClick={() => {
+                        setCurrentEnvironment('vr');
+                        dispatch({ type: 'SET_CURRENT_ENVIRONMENT', correctEnvironment: studentGroupEnvironment, currentEnvironment: 'VR' })
+                      }}
+                    />
+                    <img
+                      className={cn(currentEnvironment === 'p' ? 'border-4 border-yellow-400' : "")}
+                      height={300}
+                      src="/p.png"
+                      alt=""
+                      onClick={() => {
+                        setCurrentEnvironment('p');
+                        dispatch({ type: 'SET_CURRENT_ENVIRONMENT', correctEnvironment: studentGroupEnvironment, currentEnvironment: 'Passthrough' })
+                      }}
+                    />
+                  </div>
+                </AlertDialogDescription>
+              </>
+            )}
+            {state.type === 'ENVIRONMENT_FIX' && (
+              <>
+                <AlertDialogTitle>Fix Your Environment</AlertDialogTitle>
+                <AlertDialogDescription className="grid gap-4 justify-center items-center">
+                  <p>It seems your environment is wrong.</p>
+                  <p>Please watch this video to see how to fix it, and remember that your group is <b className="text-yellow-400">{studentGroupEnvironment}</b></p>
+                  <iframe width="100%" height="315"
+                    src="https://www.youtube.com/embed/I1Sa5IXO6pE?t=10">
+                  </iframe>
+                </AlertDialogDescription>
+              </>
+            )}
             {state.type === "CONFIRMATION" && (
               <>
                 <AlertDialogTitle>Success!</AlertDialogTitle>
@@ -495,7 +576,7 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
           )} */}
 
           <AlertDialogFooter>
-            {state.type !== "DONE" && (
+            {!['CONFIRMATION', 'DONE'].includes(state.type) && (
               <div className="w-full flex justify-start">
                 <Button
                   variant="link"
@@ -581,14 +662,14 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
               </>
             )}
 
-            {state.type === "VR_MODE_PASSTHROUGH" && (
+            {/* {state.type === "VR_MODE_PASSTHROUGH" && (
               <Button
                 variant={"outline"}
                 onClick={() => dispatch({ type: "NEXT" })}
               >
                 Continue
               </Button>
-            )}
+            )} */}
 
             {state.type === "AUDIO_CUE" && (
               <div className="flex w-full justify-end items-center">
@@ -622,6 +703,23 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
               </Button>
             )} */}
 
+            {state.type === 'ENVIRONMENT_CHECK' && (
+              <Button
+                onClick={() => { dispatch({ type: 'NEXT' }); }}
+                disabled={currentEnvironment === ''}
+              >
+                Continue
+              </Button>
+            )}
+
+            {state.type === 'ENVIRONMENT_FIX' && (
+              <Button
+                onClick={() => dispatch({ type: 'FIX_ENVIRONMENT' })}
+              >
+                I have fixed it!
+              </Button>
+            )}
+
             {state.type === "CONFIRMATION" && (
               <AlertDialogAction
                 onClick={() => {
@@ -637,21 +735,21 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
         </AlertDialogContent>
       </AlertDialog>
 
-      <FixDialog 
-        isOpen={showLocalServerFix} 
+      <FixDialog
+        isOpen={showLocalServerFix}
         onClose={() => setShowLocalServerFix(false)}
         title="Fix Local Server"
       >
         <img
-            className="rounded-md shadow"
-            src="/cmd.png"
-            alt="Local Server"
+          className="rounded-md shadow"
+          src="/cmd.png"
+          alt="Local Server"
         />
 
         <DialogDescription>
-          The local server (shown above) acts as an intermediary app that runs in the background, 
+          The local server (shown above) acts as an intermediary app that runs in the background,
           managing communications between the laptop, the browser, and our servers.
-          If the Local Server is currently running, please close the command prompt window. 
+          If the Local Server is currently running, please close the command prompt window.
           Then, double-click the "Open this first" shortcut on the desktop to restart the local server.
           Wait a few seconds and click "Click to Verify Again" to check the status.
         </DialogDescription>
@@ -660,8 +758,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
         </DialogDescription>
       </FixDialog>
 
-      <FixDialog 
-        isOpen={showPersonalAnalyticsFix} 
+      <FixDialog
+        isOpen={showPersonalAnalyticsFix}
         onClose={() => setShowPersonalAnalyticsFix(false)}
         title="Fix Personal Analytics App"
       >
@@ -691,8 +789,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
 
         <DialogDescription>
           If the Personal Analytics app is currently running, please close it completely.
-          <span className="text-yellow-500"> Please use the scrollbar above to view the instructions 
-          for closing the PersonalAnalytics app. </span>
+          <span className="text-yellow-500"> Please use the scrollbar above to view the instructions
+            for closing the PersonalAnalytics app. </span>
           Then, restart the app using the provided executable file (.exe).
           Wait a few seconds and click "Click to Verify Again" to check the status.
         </DialogDescription>
@@ -701,8 +799,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
         </DialogDescription>
       </FixDialog>
 
-      <FixDialog 
-        isOpen={showFeedbackSystemFix} 
+      <FixDialog
+        isOpen={showFeedbackSystemFix}
         onClose={() => setShowFeedbackSystemFix(false)}
         title="Fix Stoplight Feedback System"
       >
@@ -714,8 +812,8 @@ export function PreSessionChecks({ completedCallback, session }: PreSessionCheck
           />
         </div>
         <DialogDescription>
-          The stoplight app should be centered at the top of each display used by the computer. 
-          If it appears to be open, please close it completely (as indicated by the image). Then, 
+          The stoplight app should be centered at the top of each display used by the computer.
+          If it appears to be open, please close it completely (as indicated by the image). Then,
           re-open the Stoplight executable (.exe) file once more.
           Wait a few seconds and click "Click to Verify Again" to check the status.
         </DialogDescription>
