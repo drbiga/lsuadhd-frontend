@@ -32,7 +32,7 @@ export type PreSessionChecksSteps =
   | { type: "WELCOME" }
   | { type: "SUPPORTING_APPS" }
   | { type: "HEADPHONE_CHECK" }
-  | { type: "VR_MODE_PASSTHROUGH" }
+  // | { type: "VR_MODE_PASSTHROUGH" }
   | { type: "AUDIO_CUE"; answer: string; cue: string; error?: string }
   // | { type: "GOAL_SETTING"; goalPercentage: number }
   | { type: 'ENVIRONMENT_CHECK', correctEnvironment: string, currentEnvironment: string }
@@ -84,21 +84,18 @@ export function checksReducer(
       break;
     case "HEADPHONE_CHECK":
       if (action.type === "NEXT") {
-        if (!session?.is_passthrough) {
-          const firstCue =
-            availableCues[Math.floor(Math.random() * availableCues.length)];
-          return { type: "AUDIO_CUE", answer: "", cue: firstCue };
-        }
-        return { type: "VR_MODE_PASSTHROUGH" };
-      }
-      break;
-    case "VR_MODE_PASSTHROUGH":
-      if (action.type === "NEXT") {
         const firstCue =
           availableCues[Math.floor(Math.random() * availableCues.length)];
         return { type: "AUDIO_CUE", answer: "", cue: firstCue };
       }
       break;
+    // case "VR_MODE_PASSTHROUGH":
+    //   if (action.type === "NEXT") {
+    //     const firstCue =
+    //       availableCues[Math.floor(Math.random() * availableCues.length)];
+    //     return { type: "AUDIO_CUE", answer: "", cue: firstCue };
+    //   }
+    //   break;
     case "AUDIO_CUE":
       if (action.type === "SET_AUDIO_CUE")
         return { ...state, answer: action.answer };
@@ -444,7 +441,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                 </div>
               </>
             )}
-            {state.type === "VR_MODE_PASSTHROUGH" && (
+            {/* {state.type === "VR_MODE_PASSTHROUGH" && (
               <>
                 <AlertDialogTitle>Setting VR mode to Passthrough</AlertDialogTitle>
                 <AlertDialogDescription>
@@ -454,7 +451,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                   passthrough before continuing.
                 </AlertDialogDescription>
               </>
-            )}
+            )} */}
             {state.type === "AUDIO_CUE" && (
               <>
                 <AlertDialogTitle>Final Audio Check: Please enter the audio cue</AlertDialogTitle>
@@ -665,14 +662,14 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
               </>
             )}
 
-            {state.type === "VR_MODE_PASSTHROUGH" && (
+            {/* {state.type === "VR_MODE_PASSTHROUGH" && (
               <Button
                 variant={"outline"}
                 onClick={() => dispatch({ type: "NEXT" })}
               >
                 Continue
               </Button>
-            )}
+            )} */}
 
             {state.type === "AUDIO_CUE" && (
               <div className="flex w-full justify-end items-center">
