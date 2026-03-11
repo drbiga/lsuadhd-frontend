@@ -20,6 +20,8 @@ import { Session } from "@/features/session-execution/services/sessionExecutionS
 import { toast } from "react-toastify";
 import iamService from "@/services/iam";
 
+import { Tooltip } from 'react-tooltip';
+
 import {
   Dialog,
   DialogContent,
@@ -723,17 +725,30 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
             )} */}
 
             {state.type === 'ENVIRONMENT_CHECK' && (
-              <Button
-                onClick={() => { dispatch({ type: 'NEXT' }); }}
-                disabled={currentEnvironment === ''}
-              >
-                Continue
-              </Button>
+              <>
+                <span
+                  data-tooltip-id="env-check-continue-tooltip"
+                  data-tooltip-content="Please select an environment option before proceeding"
+                >
+                  <Button
+                    onClick={() => { dispatch({ type: 'NEXT' }); }}
+                    disabled={currentEnvironment === ''}
+                  >
+                    Continue
+                  </Button>
+                </span>
+                {currentEnvironment === '' && (
+                  <Tooltip id="env-check-continue-tooltip" />
+                )}
+              </>
             )}
 
             {state.type === 'ENVIRONMENT_FIX' && (
               <Button
-                onClick={() => dispatch({ type: 'FIX_ENVIRONMENT' })}
+                onClick={() => {
+                  dispatch({ type: 'FIX_ENVIRONMENT' });
+                  setCurrentEnvironment('');
+                }}
               >
                 I have fixed it!
               </Button>
