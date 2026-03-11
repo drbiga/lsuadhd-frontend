@@ -79,29 +79,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         })();
     }, []);
 
-    const initializeLocalServer = useCallback(async () => {
+    const initializeLocalServer = useCallback(async (sessionOverride?: ISession) => {
+        // use session argument provided (upon login), otherwise use current session from authState
+        const sessionToUse = sessionOverride ?? authState.session;
+        if (!sessionToUse) {
+            return;
+        }
         try {
-            if (!authState.isLoggedIn) {
-                return;
-            }
             const response = await axios.get('http://localhost:8001/session');
             const localServerSession: ISession = response.data;
-            if (authState.session && localServerSession.token !== authState.session?.token) {
-                axios.post('http://localhost:8001/session', authState.session);
+            if (localServerSession.token !== sessionToUse.token) {
+                await axios.post('http://localhost:8001/session', sessionToUse);
             }
-            return authState;
         } catch (error) {
             if (error instanceof AxiosError) {
                 if (error.response?.status === 412) {
-                    // No session set in the local server yet, so we just set normally
-                    if (authState.session) {
-                        axios.post('http://localhost:8001/session', authState.session);
-                        return authState;
-                    }
+                    await axios.post('http://localhost:8001/session', sessionToUse);
                 }
             }
         }
-    }, [authState.isLoggedIn, authState.session]);
+    }, [authState.session]);
 
     const login = useCallback(async (credentials: LoginCredentials) => {
         try {
@@ -128,6 +125,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                     session,
                     isLoggedIn: true,
                 });
+                initializeLocalServer(session);
                 return session;
             } else {
                 toast.error('Error while creating a session')
@@ -141,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             toast.error('Something went wrong while logging in.')
         }
         return null;
-    }, [setAuthState, ipAddress]);
+    }, [setAuthState, ipAddress, initializeLocalServer]);
 
     const logout = useCallback(() => {
         removeLocalStorage(Item.SESSION_OBJ);

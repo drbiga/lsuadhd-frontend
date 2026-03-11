@@ -25,6 +25,7 @@
     "react-hook-form": "^7.52.1",
     "react-router-dom": "^6.24.1",
     "react-toastify": "^10.0.5",
+    "react-tooltip": "^5.30.0",
     "recharts": "^2.12.7",
     "tailwind-merge": "^2.3.0",
     "tailwindcss-animate": "^1.0.7"
