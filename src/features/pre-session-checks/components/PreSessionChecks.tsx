@@ -12,7 +12,7 @@ import {
   AlertDialogAction,
   AlertDialogDescription,
 } from "@radix-ui/react-alert-dialog";
-import { CirclePlay } from "lucide-react";
+import { CheckIcon, CirclePlay } from "lucide-react";
 import axios, { AxiosError } from "axios";
 import { useAuth } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
@@ -480,6 +480,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                   {['VR Feedback', 'VR Only'].includes(studentGroupEnvironment) && (
                     <p>This means that you <b className="text-yellow-400">MUST</b> see a virtual environment, a natural landscape, instead of the "real world" surroundings.</p>
                   )}
+                  <p>Please select the environment from the pictures below that mostly looks like what you see</p>
                   {!['VR Feedback', 'VR Only', 'Passthrough'].includes(studentGroupEnvironment) && (
                     <p>
                       There seems to be an issue with your group.
@@ -487,28 +488,46 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                       page and be sure to include your group in the picture
                     </p>
                   )}
-                  <p>You can try to fix this issue by selecting the screenshot below that resembles what you are seeing the most:</p>
+                  {/* <p>You can try to fix this issue by selecting the screenshot below that resembles what you are seeing the most:</p> */}
                   <div className="grid gap-4">
-                    <img
-                      className={cn(currentEnvironment === 'vr' ? 'border-4 border-yellow-400' : "")}
-                      height={300}
-                      src="/vr.png"
-                      alt=""
+                    <p>VR Environment:</p>
+                    <div className="relative"
                       onClick={() => {
                         setCurrentEnvironment('vr');
                         dispatch({ type: 'SET_CURRENT_ENVIRONMENT', correctEnvironment: studentGroupEnvironment, currentEnvironment: 'VR' })
-                      }}
-                    />
-                    <img
-                      className={cn(currentEnvironment === 'p' ? 'border-4 border-yellow-400' : "")}
-                      height={300}
-                      src="/p.png"
-                      alt=""
+                      }}>
+                      <div className={cn(
+                        'flex justify-center items-center',
+                        'transition-all duration-250 absolute top-0 right-0 left-0 bottom-0',
+                        currentEnvironment === 'vr' ? 'bg-yellow-400 opacity-50' : 'opacity-0'
+                      )}>
+                        <CheckIcon size={100} />
+                      </div>
+                      <img
+                        height={300}
+                        src="/vr.png"
+                        alt=""
+                      />
+                    </div>
+                    <p>Passthrough Environment:</p>
+                    <div className="relative"
                       onClick={() => {
                         setCurrentEnvironment('p');
                         dispatch({ type: 'SET_CURRENT_ENVIRONMENT', correctEnvironment: studentGroupEnvironment, currentEnvironment: 'Passthrough' })
-                      }}
-                    />
+                      }}>
+                      <div className={cn(
+                        'flex justify-center items-center',
+                        'transition-all duration-250 absolute top-0 right-0 left-0 bottom-0',
+                        currentEnvironment === 'p' ? 'bg-yellow-400 opacity-50' : 'opacity-0'
+                      )}>
+                        <CheckIcon size={100} />
+                      </div>
+                      <img
+                        height={300}
+                        src="/p.png"
+                        alt=""
+                      />
+                    </div>
                   </div>
                 </AlertDialogDescription>
               </>
