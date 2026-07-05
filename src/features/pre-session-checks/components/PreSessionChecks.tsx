@@ -12,7 +12,7 @@ import {
   AlertDialogAction,
   AlertDialogDescription,
 } from "@radix-ui/react-alert-dialog";
-import { CheckIcon, CirclePlay } from "lucide-react";
+import { AlertTriangle, CheckIcon, CirclePlay } from "lucide-react";
 import axios, { AxiosError } from "axios";
 import { useAuth } from "@/hooks/auth";
 import { cn } from "@/lib/utils";
@@ -32,6 +32,7 @@ import {
 
 export type PreSessionChecksSteps =
   | { type: "WELCOME" }
+  | { type: "INPUT_DEVICES" }
   | { type: "SUPPORTING_APPS" }
   | { type: "HEADPHONE_CHECK" }
   // | { type: "VR_MODE_PASSTHROUGH" }
@@ -131,10 +132,10 @@ export function checksReducer(
           toast('The continue button was pressed before setting the correct and current environments. Please let mcost16@lsu.edu know about this issue before proceeding')
         }
         if (state.correctEnvironment === 'Passthrough' && state.currentEnvironment === 'Passthrough') {
-          return { type: 'CONFIRMATION' }
+          return { type: 'INPUT_DEVICES' }
         }
         if (state.correctEnvironment.startsWith("VR") && state.currentEnvironment.startsWith("VR")) {
-          return { type: 'CONFIRMATION' }
+          return { type: 'INPUT_DEVICES' }
         }
         return { type: 'ENVIRONMENT_FIX' }
       }
@@ -142,6 +143,9 @@ export function checksReducer(
     case 'ENVIRONMENT_FIX':
       if (action.type === 'FIX_ENVIRONMENT')
         return { type: 'ENVIRONMENT_CHECK', correctEnvironment: '', currentEnvironment: '' }
+      break;
+    case "INPUT_DEVICES":
+      if (action.type === "NEXT") return { type: "CONFIRMATION" };
       break;
     case "CONFIRMATION":
       if (action.type === "FINISH") return { type: "DONE" };
@@ -343,6 +347,37 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                   To ensure a smooth session, you will perform setup checks.
                   <span className="text-yellow-500 font-bold"> Please read all instructions carefully.</span>
                 </AlertDialogDescription>
+              </>
+            )}
+            {state.type === "INPUT_DEVICES" && (
+              <>
+                <AlertDialogTitle className="flex items-center justify-center gap-2 text-center text-2xl font-extrabold text-red-500">
+                  <AlertTriangle className="h-7 w-7 shrink-0" />
+                  Please ONLY use the Mouse and Keyboard for Interaction
+                  <AlertTriangle className="h-7 w-7 shrink-0" />
+                </AlertDialogTitle>
+                <div className="flex flex-col gap-4">
+                  <AlertDialogDescription className="font-semibold text-foreground">
+                    VR controllers, joysticks, and similar devices are{" "}
+                    <span className="text-red-500 underline">NOT permitted</span> during your session.
+                  </AlertDialogDescription>
+                  <AlertDialogDescription className="font-semibold text-foreground">
+                    Do <span className="font-extrabold text-red-500">not</span> use any of the
+                    following at any point during the session:
+                  </AlertDialogDescription>
+                  <ul className="list-disc space-y-1 pl-6 text-sm font-medium text-foreground">
+                    <li>VR / Touch controllers</li>
+                    <li>VR joysticks or thumbsticks</li>
+                    <li>Gamepads and game controllers</li>
+                    <li>Hand-tracking gestures (controlling with your hands)</li>
+                    <li>The in-headset laser / ray pointer</li>
+                    <li>Trackpads, trackballs, styluses, or touchscreens</li>
+                  </ul>
+                  <AlertDialogDescription className="text-center font-bold text-yellow-500">
+                    These devices prevent your activity from being tracked correctly by the
+                    Personal Analytics application, which invalidates your session data.
+                  </AlertDialogDescription>
+                </div>
               </>
             )}
             {state.type === "SUPPORTING_APPS" && (
@@ -615,6 +650,15 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                 onClick={() => dispatch({ type: "NEXT" })}
               >
                 Continue
+              </Button>
+            )}
+
+            {state.type === "INPUT_DEVICES" && (
+              <Button
+                variant={"outline"}
+                onClick={() => dispatch({ type: "NEXT" })}
+              >
+                I Understand
               </Button>
             )}
 
