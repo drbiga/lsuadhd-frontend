@@ -10,6 +10,7 @@ export type Student = {
     sessions_analytics: SessionAnalytics[];
     survey_id?: number;
     active_session: Session;
+    group?: string;
 }
 
 export type SessionAnalytics = {

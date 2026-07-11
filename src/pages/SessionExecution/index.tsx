@@ -13,7 +13,6 @@ import { LoadingScreen } from "@/components/common/LoadingScreen";
 import { useSessionExecution } from "@/features/session-execution/hooks/useSessionExecution";
 import { usePreSessionChecks } from "@/features/pre-session-checks/hooks/usePreSessionChecks";
 import { Stage } from "@/features/session-execution/services/sessionExecutionService";
-import useManagementStudent from "@/hooks/useManagementStudent";
 
 export default function NextSession() {
   const sidebarRef = useRef<SidebarHandle>(null);
@@ -23,6 +22,7 @@ export default function NextSession() {
     sessionProgressData,
     hasNextSession,
     sessionHasEquipment,
+    studentGroup,
     startSession
   } = useSessionExecution();
 
@@ -37,8 +37,6 @@ export default function NextSession() {
     await startSession(/* goalPercentage */);
     sidebarRef.current?.autoCollapse();
   };
-
-  const { student } = useManagementStudent();
 
   if (hasNextSession === -1) {
     return (
@@ -74,7 +72,7 @@ export default function NextSession() {
                   setCompletedPreSessionChecks(true);
                   // setGoalPercentage(goal);
                 }}
-                studentGroupEnvironment={student?.group || ''}
+                studentGroupEnvironment={studentGroup}
               />
             </div>
           </div>
