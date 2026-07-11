@@ -26,6 +26,7 @@ export function useSessionExecution() {
     const [sessionProgressData, setSessionProgressData] = useState<SessionProgressData | null>(null);
     const [hasNextSession, setHasNextSession] = useState<number>(-1); // -1: loading, 0: no, 1: yes
     const [sessionHasEquipment, setSessionHasEquipment] = useState<boolean>(false);
+    const [studentGroup, setStudentGroup] = useState<string>('');
 
     const { authState } = useAuth();
 
@@ -170,6 +171,7 @@ export function useSessionExecution() {
                     const student = await sessionExecutionService.getStudent(
                         authState.session.user.username
                     );
+                    setStudentGroup(student.group || '');
                     if (student.active_session !== null) {
                         setSessionHasStarted(true);
                         setNextSession(student.active_session);
@@ -222,6 +224,7 @@ export function useSessionExecution() {
         sessionProgressData,
         hasNextSession,
         sessionHasEquipment,
+        studentGroup,
         startSession,
         startHomework,
         fetchNextSession,
