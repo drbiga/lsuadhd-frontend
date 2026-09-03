@@ -19,6 +19,7 @@ import { cn } from "@/lib/utils";
 import { Session } from "@/features/session-execution/services/sessionExecutionService";
 import { toast } from "react-toastify";
 import iamService from "@/services/iam";
+import api from "@/services/api";
 
 import { Tooltip } from 'react-tooltip';
 
@@ -34,6 +35,7 @@ export type PreSessionChecksSteps =
   | { type: "WELCOME" }
   | { type: "INPUT_DEVICES" }
   | { type: "SUPPORTING_APPS" }
+  | { type: "SYNCING" }
   | { type: "HEADPHONE_CHECK" }
   // | { type: "VR_MODE_PASSTHROUGH" }
   | { type: "AUDIO_CUE"; answer: string; cue: string; error?: string }
@@ -42,6 +44,10 @@ export type PreSessionChecksSteps =
   | { type: 'ENVIRONMENT_FIX' }
   | { type: "CONFIRMATION" }
   | { type: "DONE" };
+
+// Rough per-feedback estimate (upload + OCR, ~2 at a time) shown to students so they know
+// roughly how long feedback recovery will take
+const ESTIMATED_SECONDS_PER_FEEDBACK = 2;
 
 export type Action =
   | { type: "NEXT" }
@@ -78,6 +84,11 @@ export function checksReducer(
       if (action.type === "NEXT") return { type: "SUPPORTING_APPS" };
       break;
     case "SUPPORTING_APPS":
+      // Check for (and restore) any feedback that never made it to the 
+      // cloud before moving on with the rest of the checks.
+      if (action.type === "NEXT") return { type: "SYNCING" };
+      break;
+    case "SYNCING":
       if (action.type === "NEXT") {
         if (session?.no_equipment || (session?.seqnum ?? 0) <= 2) {
           return { type: "CONFIRMATION" };
@@ -130,6 +141,9 @@ export function checksReducer(
       if (action.type === 'NEXT') {
         if (state.correctEnvironment === '' || state.currentEnvironment === '') {
           toast('The continue button was pressed before setting the correct and current environments. Please let mcost16@lsu.edu know about this issue before proceeding')
+        }
+        if (state.correctEnvironment === 'TestingGroup') {
+          return { type: 'INPUT_DEVICES' }
         }
         if (state.correctEnvironment === 'Passthrough' && state.currentEnvironment === 'Passthrough') {
           return { type: 'INPUT_DEVICES' }
@@ -211,15 +225,20 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const audioCueAnswerRef = useRef(null);
   const [localServerIsWorking, setLocalServerIsWorking] = useState(false);
+  const [localServerIsUpdated, setLocalServerIsUpdated] = useState(false);
   const [personalAnalyticsIsWorking, setPersonalAnalyticsIsWorking] = useState(false);
   const [feedbackSystemIsWorking, setFeedbackSystemIsWorking] = useState(false);
   const [isPingingLocal, setIsPingingLocal] = useState(false);
+  const [isPingingUpdate, setIsPingingUpdate] = useState(false);
   const [isPingingPersonal, setIsPingingPersonal] = useState(false);
   const [isPingingFeedback, setIsPingingFeedback] = useState(false);
   const [beepChecked, setBeepChecked] = useState(false);
   const [showLocalServerFix, setShowLocalServerFix] = useState(false);
   const [showPersonalAnalyticsFix, setShowPersonalAnalyticsFix] = useState(false);
   const [showFeedbackSystemFix, setShowFeedbackSystemFix] = useState(false);
+  const [syncPhase, setSyncPhase] = useState<"checking" | "syncing" | "error">("checking");
+  const [syncCount, setSyncCount] = useState(0);
+  const [syncRetry, setSyncRetry] = useState(0);
   // const [savedGoalPercentage, setSavedGoalPercentage] = useState<number | undefined>(undefined);
   const [currentEnvironment, setCurrentEnvironment] = useState("");
 
@@ -244,6 +263,18 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
       setIsPingingLocal(false);
     }
   }, [initializeLocalServer]);
+
+  const checkLocalServerUpdated = useCallback(async () => {
+    setIsPingingUpdate(true);
+    try {
+      const response = await axios.post("http://localhost:8001/ensure_updated");
+      setLocalServerIsUpdated(response.data.status === "current");
+    } catch (e: any) {
+      setLocalServerIsUpdated(false);
+    } finally {
+      setIsPingingUpdate(false);
+    }
+  }, []);
 
   const pingPersonalAnalytics = useCallback(async () => {
     setIsPingingPersonal(true);
@@ -285,17 +316,51 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
     }
   }, []);
 
-  const isPinging = isPingingLocal || isPingingPersonal || (session?.has_feedback ? isPingingFeedback : false);
+  const isPinging = isPingingLocal || isPingingUpdate || isPingingPersonal || (session?.has_feedback ? isPingingFeedback : false);
 
   useEffect(() => {
     pingLocalServer();
+    checkLocalServerUpdated();
     pingPersonalAnalytics();
     if (session?.has_feedback) {
       pingFeedbackSystem();
     } else {
       setFeedbackSystemIsWorking(true);
     }
-  }, [pingLocalServer, pingPersonalAnalytics, pingFeedbackSystem, session]);
+  }, [pingLocalServer, checkLocalServerUpdated, pingPersonalAnalytics, pingFeedbackSystem, session]);
+
+  useEffect(() => {
+    if (state.type !== "SYNCING") return;
+    let active = true;
+    (async () => {
+      setSyncPhase("checking");
+      try {
+        const { data } = await axios.get("http://localhost:8001/reconcile/pending");
+        const pending: number = data?.pending ?? 0;
+        if (!active) return;
+        if (pending === 0) {
+          dispatch({ type: "NEXT" });
+          return;
+        }
+        setSyncCount(pending);
+        setSyncPhase("syncing");
+        await axios.post("http://localhost:8001/reconcile", {}, { timeout: 10 * 60 * 1000 });
+        if (!active) return;
+        const after = await axios.get("http://localhost:8001/reconcile/pending");
+        if (!active) return;
+        if ((after.data?.pending ?? 0) === 0) {
+          dispatch({ type: "NEXT" });
+        } else {
+          setSyncPhase("error");
+        }
+      } catch {
+        if (active) setSyncPhase("error");
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [state.type, syncRetry]);
 
   const handleCheckBeep = () => {
     try {
@@ -328,6 +393,8 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
             }
           }
 
+          // Wake the OCR container (pre-ping) so its warm for the session
+          api.get("/session_execution/warm-ocr").catch(() => {});
           dispatch({ type: "RESET" });
           setDialogIsOpen(true);
         }}
@@ -416,6 +483,21 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                       </Button>
                     )}
                   </div>
+                  {localServerIsWorking && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={cn("w-3 h-3 rounded-full", localServerIsUpdated ? "bg-green-600" : "bg-red-600")}></span>
+                        <AlertDialogDescription>
+                          The Local Server appears to be {localServerIsUpdated ? "up to date" : "out of date"}
+                        </AlertDialogDescription>
+                      </div>
+                      {!localServerIsUpdated && (
+                        <Button variant="outline" size="sm" onClick={() => setShowLocalServerFix(true)}>
+                          Fix
+                        </Button>
+                      )}
+                    </div>
+                  )}
                   {localServerIsWorking && (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -590,6 +672,43 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                 </AlertDialogDescription>
               </>
             )}
+            {state.type === "SYNCING" && (
+              <>
+                <AlertDialogTitle>
+                  {syncPhase === "error" ? "Something went wrong" : "Recovering feedback from past sessions"}
+                </AlertDialogTitle>
+                <div className="flex flex-col items-center gap-4 py-4">
+                  {syncPhase !== "error" && (
+                    <div className="w-8 h-8 border-2 border-t-2 border-white border-t-blue-400 rounded-full animate-spin"></div>
+                  )}
+                  {syncPhase === "checking" && (
+                    <AlertDialogDescription className="text-center">
+                      Checking whether any feedback from your past sessions failed to upload to the cloud. This will only take a moment.
+                    </AlertDialogDescription>
+                  )}
+                  {syncPhase === "syncing" && (
+                    <AlertDialogDescription className="text-center">
+                      Some feedback from your past sessions never reached the cloud. Restoring {syncCount} item{syncCount === 1 ? "" : "s"} now. Estimated time{" "}
+                      <strong>
+                        {syncCount * ESTIMATED_SECONDS_PER_FEEDBACK < 60
+                          ? "less than a minute"
+                          : `~${Math.ceil((syncCount * ESTIMATED_SECONDS_PER_FEEDBACK) / 60)} min`}*
+                      </strong>.
+                      <span className="text-yellow-500 font-bold"> Please do not close this window.</span>
+                      <br />
+                      Questions or concerns? Contact <strong className="text-yellow-500">Matheus Costa (mcost16@lsu.edu)</strong>.
+                    </AlertDialogDescription>
+                  )}
+                  {syncPhase === "error" && (
+                    <AlertDialogDescription className="text-center">
+                      We couldn't finish restoring feedback that failed to upload during a past session. You can retry, or continue (risk) and let a study coordinator resolve it later.
+                      <br />
+                      Please contact <strong className="text-yellow-500">Matheus Costa (mcost16@lsu.edu)</strong>.
+                    </AlertDialogDescription>
+                  )}
+                </div>
+              </>
+            )}
           </AlertDialogHeader>
 
           {state.type === "AUDIO_CUE" && (
@@ -632,7 +751,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
           )} */}
 
           <AlertDialogFooter>
-            {!['CONFIRMATION', 'DONE'].includes(state.type) && (
+            {!['CONFIRMATION', 'DONE', 'SYNCING'].includes(state.type) && (
               <div className="w-full flex justify-start">
                 <Button
                   variant="link"
@@ -670,7 +789,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                     isPinging ? "hidden" : ""
                   )}
                 >
-                  {(localServerIsWorking && personalAnalyticsIsWorking && (!session?.has_feedback || feedbackSystemIsWorking)) ? (
+                  {(localServerIsWorking && localServerIsUpdated && personalAnalyticsIsWorking && (!session?.has_feedback || feedbackSystemIsWorking)) ? (
                     <div className="w-2 h-2 rounded-full bg-green-600"></div>
                   ) : (
                     <div className="w-2 h-2 rounded-full bg-red-600"></div>
@@ -679,6 +798,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                     disabled={isPinging}
                     onClick={() => {
                       pingLocalServer();
+                      checkLocalServerUpdated();
                       pingPersonalAnalytics();
                       if (session?.has_feedback) {
                         pingFeedbackSystem();
@@ -697,6 +817,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                   variant={"outline"}
                   disabled={
                     !localServerIsWorking ||
+                    !localServerIsUpdated ||
                     !personalAnalyticsIsWorking ||
                     (session?.has_feedback && !feedbackSystemIsWorking)
                   }
@@ -808,6 +929,17 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
               >
                 Close
               </AlertDialogAction>
+            )}
+
+            {state.type === "SYNCING" && syncPhase === "error" && (
+              <>
+                <Button variant="link" onClick={() => dispatch({ type: "NEXT" })}>
+                  Continue anyway
+                </Button>
+                <Button variant="outline" onClick={() => setSyncRetry((n) => n + 1)}>
+                  Retry
+                </Button>
+              </>
             )}
           </AlertDialogFooter>
         </AlertDialogContent>
