@@ -1,3 +1,5 @@
+import { useEffect } from "react";
+import axios from "axios";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -11,6 +13,12 @@ interface FinishedStageProps {
 }
 
 export function FinishedStage({ hasEquipment }: FinishedStageProps) {
+  useEffect(() => {
+    // Kill local server upon session end so student must re-launch it for the next session
+    // Forcing students to re-launch allows the localserver to run its startup update sequence
+    axios.post("http://localhost:8001/shutdown").catch(() => {});
+  }, []);
+
   return (
     <>
       {hasEquipment && (

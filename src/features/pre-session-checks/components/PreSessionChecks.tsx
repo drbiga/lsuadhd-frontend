@@ -142,6 +142,9 @@ export function checksReducer(
         if (state.correctEnvironment === '' || state.currentEnvironment === '') {
           toast('The continue button was pressed before setting the correct and current environments. Please let mcost16@lsu.edu know about this issue before proceeding')
         }
+        if (state.correctEnvironment === 'TestingGroup') {
+          return { type: 'INPUT_DEVICES' }
+        }
         if (state.correctEnvironment === 'Passthrough' && state.currentEnvironment === 'Passthrough') {
           return { type: 'INPUT_DEVICES' }
         }
@@ -222,9 +225,11 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
   const [dialogIsOpen, setDialogIsOpen] = useState(false);
   const audioCueAnswerRef = useRef(null);
   const [localServerIsWorking, setLocalServerIsWorking] = useState(false);
+  const [localServerIsUpdated, setLocalServerIsUpdated] = useState(false);
   const [personalAnalyticsIsWorking, setPersonalAnalyticsIsWorking] = useState(false);
   const [feedbackSystemIsWorking, setFeedbackSystemIsWorking] = useState(false);
   const [isPingingLocal, setIsPingingLocal] = useState(false);
+  const [isPingingUpdate, setIsPingingUpdate] = useState(false);
   const [isPingingPersonal, setIsPingingPersonal] = useState(false);
   const [isPingingFeedback, setIsPingingFeedback] = useState(false);
   const [beepChecked, setBeepChecked] = useState(false);
@@ -258,6 +263,18 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
       setIsPingingLocal(false);
     }
   }, [initializeLocalServer]);
+
+  const checkLocalServerUpdated = useCallback(async () => {
+    setIsPingingUpdate(true);
+    try {
+      const response = await axios.post("http://localhost:8001/ensure_updated");
+      setLocalServerIsUpdated(response.data.status === "current");
+    } catch (e: any) {
+      setLocalServerIsUpdated(false);
+    } finally {
+      setIsPingingUpdate(false);
+    }
+  }, []);
 
   const pingPersonalAnalytics = useCallback(async () => {
     setIsPingingPersonal(true);
@@ -299,17 +316,18 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
     }
   }, []);
 
-  const isPinging = isPingingLocal || isPingingPersonal || (session?.has_feedback ? isPingingFeedback : false);
+  const isPinging = isPingingLocal || isPingingUpdate || isPingingPersonal || (session?.has_feedback ? isPingingFeedback : false);
 
   useEffect(() => {
     pingLocalServer();
+    checkLocalServerUpdated();
     pingPersonalAnalytics();
     if (session?.has_feedback) {
       pingFeedbackSystem();
     } else {
       setFeedbackSystemIsWorking(true);
     }
-  }, [pingLocalServer, pingPersonalAnalytics, pingFeedbackSystem, session]);
+  }, [pingLocalServer, checkLocalServerUpdated, pingPersonalAnalytics, pingFeedbackSystem, session]);
 
   useEffect(() => {
     if (state.type !== "SYNCING") return;
@@ -465,6 +483,21 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                       </Button>
                     )}
                   </div>
+                  {localServerIsWorking && (
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <span className={cn("w-3 h-3 rounded-full", localServerIsUpdated ? "bg-green-600" : "bg-red-600")}></span>
+                        <AlertDialogDescription>
+                          The Local Server appears to be {localServerIsUpdated ? "up to date" : "out of date"}
+                        </AlertDialogDescription>
+                      </div>
+                      {!localServerIsUpdated && (
+                        <Button variant="outline" size="sm" onClick={() => setShowLocalServerFix(true)}>
+                          Fix
+                        </Button>
+                      )}
+                    </div>
+                  )}
                   {localServerIsWorking && (
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
@@ -756,7 +789,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                     isPinging ? "hidden" : ""
                   )}
                 >
-                  {(localServerIsWorking && personalAnalyticsIsWorking && (!session?.has_feedback || feedbackSystemIsWorking)) ? (
+                  {(localServerIsWorking && localServerIsUpdated && personalAnalyticsIsWorking && (!session?.has_feedback || feedbackSystemIsWorking)) ? (
                     <div className="w-2 h-2 rounded-full bg-green-600"></div>
                   ) : (
                     <div className="w-2 h-2 rounded-full bg-red-600"></div>
@@ -765,6 +798,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                     disabled={isPinging}
                     onClick={() => {
                       pingLocalServer();
+                      checkLocalServerUpdated();
                       pingPersonalAnalytics();
                       if (session?.has_feedback) {
                         pingFeedbackSystem();
@@ -783,6 +817,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                   variant={"outline"}
                   disabled={
                     !localServerIsWorking ||
+                    !localServerIsUpdated ||
                     !personalAnalyticsIsWorking ||
                     (session?.has_feedback && !feedbackSystemIsWorking)
                   }
