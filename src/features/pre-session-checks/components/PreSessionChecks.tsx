@@ -23,13 +23,9 @@ import api from "@/services/api";
 
 import { Tooltip } from 'react-tooltip';
 
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog"
+import { AppFixDialog } from "./AppFixDialog";
+
+import { DialogDescription } from "@/components/ui/dialog"
 
 export type PreSessionChecksSteps =
   | { type: "WELCOME" }
@@ -188,29 +184,6 @@ const AudioCuePlayButton = ({ cue }: { cue: string }) => {
   );
 };
 
-const FixDialog = ({
-  isOpen,
-  onClose,
-  title,
-  children,
-}: {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
-}) => {
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          {children}
-        </DialogHeader>
-      </DialogContent>
-    </Dialog>
-  );
-};
-
 export type PreSessionChecksProps = {
   completedCallback: (goalPercentage?: number) => void;
   session: Session | null;
@@ -248,9 +221,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
     setIsPingingLocal(true);
     try {
       const response = await axios.get("http://localhost:8001/session");
-      if (response.data) {
-        setLocalServerIsWorking(true);
-      }
+      setLocalServerIsWorking(Boolean(response.data));
     } catch (e: any) {
       setLocalServerIsWorking(false);
       if (e instanceof AxiosError) {
@@ -280,9 +251,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
     setIsPingingPersonal(true);
     try {
       const response = await axios.get("http://localhost:8001/checkPA");
-      if (response.data) {
-        setPersonalAnalyticsIsWorking(true);
-      }
+      setPersonalAnalyticsIsWorking(Boolean(response.data));
     } catch (e: any) {
       setPersonalAnalyticsIsWorking(false);
       if (e instanceof AxiosError && e.code === "ERR_NETWORK") {
@@ -300,9 +269,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
     setIsPingingFeedback(true);
     try {
       const response = await axios.get("http://localhost:8080/health-check");
-      if (response.data) {
-        setFeedbackSystemIsWorking(true);
-      }
+      setFeedbackSystemIsWorking(Boolean(response.data));
     } catch (e: any) {
       setFeedbackSystemIsWorking(false);
       if (e instanceof AxiosError && e.code === "ERR_NETWORK") {
@@ -418,18 +385,18 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
             )}
             {state.type === "INPUT_DEVICES" && (
               <>
-                <AlertDialogTitle className="flex items-center justify-center gap-2 text-center text-2xl font-extrabold text-red-500">
+                <AlertDialogTitle className="flex items-center justify-center gap-2 text-center text-2xl text-yellow-500">
                   <AlertTriangle className="h-7 w-7 shrink-0" />
-                  Please ONLY use the Mouse and Keyboard for Interaction
+                  Please Only use the Mouse and Keyboard for Interaction
                   <AlertTriangle className="h-7 w-7 shrink-0" />
                 </AlertDialogTitle>
                 <div className="flex flex-col gap-4">
                   <AlertDialogDescription className="font-semibold text-foreground">
                     VR controllers, joysticks, and similar devices are{" "}
-                    <span className="text-red-500 underline">NOT permitted</span> during your session.
+                    <span className="text-red-500">not permitted</span> during your session.
                   </AlertDialogDescription>
                   <AlertDialogDescription className="font-semibold text-foreground">
-                    Do <span className="font-extrabold text-red-500">not</span> use any of the
+                    Please avoid using any of the
                     following at any point during the session:
                   </AlertDialogDescription>
                   <ul className="list-disc space-y-1 pl-6 text-sm font-medium text-foreground">
@@ -442,21 +409,17 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                   </ul>
                   <AlertDialogDescription className="text-center font-bold text-yellow-500">
                     These devices prevent your activity from being tracked correctly by the
-                    Personal Analytics application, which invalidates your session data.
+                    Personal Analytics application.
                   </AlertDialogDescription>
                 </div>
               </>
             )}
             {state.type === "SUPPORTING_APPS" && (
               <>
-                <AlertDialogTitle>Supporting apps</AlertDialogTitle>
+                <AlertDialogTitle>Check If Supporting Apps Are Running</AlertDialogTitle>
                 <div className="flex flex-col gap-6">
-                  <AlertDialogDescription>
-                    <span className="text-yellow-500 font-bold">Please ensure {session?.has_feedback ? 'all systems' : 'both the server and app'} are running. </span>
-                    Refer to the indicators below for guidance.
-                  </AlertDialogDescription>
 
-                  <div className="flex flex-col gap-4">
+                  <div className="flex flex-col gap-2">
                     <div className="flex justify-center">
                       <img
                         className="rounded-md shadow max-w-full"
@@ -464,10 +427,23 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                         alt="Command Prompt Window"
                       />
                     </div>
-                    <AlertDialogDescription className="text-center text-yellow-500 font-semibold">
+                    <AlertDialogDescription className="text-sm text-center text-yellow-500 font-semibold">
                       This is what the window looks like when the local server is running.
-                      <span className="text-red-500"> Do NOT close this window during your session.</span>
+                      <span className="text-red-500"> Please do not close this window during your session.</span>
                     </AlertDialogDescription>
+                    <div className="flex items-center gap-4">
+                      <AlertDialogDescription className="text-sm">
+                        If you see the Windows notification displayed shown on the right, or an app 
+                        is blocked by Windows, turn OFF Smart App Control: 
+                        search for and open "Windows Security" → App &amp; browser control
+                        → Smart App Control settings → Turn Off.
+                      </AlertDialogDescription>
+                      <img
+                        className="w-6/12 shrink-0 rounded-md border border-border shadow"
+                        src="/sac-blocked-notification.png"
+                        alt="Windows Security notification saying part of this app has been blocked"
+                      />
+                    </div>
                   </div>
 
                   <div className="flex items-center justify-between">
@@ -484,7 +460,7 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                     )}
                   </div>
                   {localServerIsWorking && (
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-1">
                       <div className="flex items-center gap-3">
                         <span className={cn("w-3 h-3 rounded-full", localServerIsUpdated ? "bg-green-600" : "bg-red-600")}></span>
                         <AlertDialogDescription>
@@ -492,9 +468,10 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
                         </AlertDialogDescription>
                       </div>
                       {!localServerIsUpdated && (
-                        <Button variant="outline" size="sm" onClick={() => setShowLocalServerFix(true)}>
-                          Fix
-                        </Button>
+                        <AlertDialogDescription className="pl-6 text-xs text-red-500">
+                          The local server has automatically shut itself down because it is out of date.
+                          Please relaunch it so it can update itself to the latest version.
+                        </AlertDialogDescription>
                       )}
                     </div>
                   )}
@@ -945,92 +922,90 @@ export function PreSessionChecks({ completedCallback, session, studentGroupEnvir
         </AlertDialogContent>
       </AlertDialog>
 
-      <FixDialog
+      <AppFixDialog
         isOpen={showLocalServerFix}
         onClose={() => setShowLocalServerFix(false)}
-        title="Fix Local Server"
-      >
-        <img
-          className="rounded-md shadow"
-          src="/cmd.png"
-          alt="Local Server"
-        />
+        appName="the Local Server"
+        shutdownSteps={
+          <>
+            <DialogDescription>
+              The Local Server is the black command prompt window shown on the
+              checks screen. Close it as usual.
+            </DialogDescription>
+            <img
+              className="w-full rounded-md border border-border shadow"
+              src="/cmd.png"
+              alt="The Local Server command prompt window"
+            />
+          </>
+        }
+      />
 
-        <DialogDescription>
-          The local server (shown above) acts as an intermediary app that runs in the background,
-          managing communications between the laptop, the browser, and our servers.
-          If the Local Server is currently running, please close the command prompt window.
-          Then, double-click the "Open this first" shortcut on the desktop to restart the local server.
-          Wait a few seconds and click "Click to Verify Again" to check the status.
-        </DialogDescription>
-        <DialogDescription>
-          If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
-        </DialogDescription>
-      </FixDialog>
-
-      <FixDialog
+      <AppFixDialog
         isOpen={showPersonalAnalyticsFix}
         onClose={() => setShowPersonalAnalyticsFix(false)}
-        title="Fix Personal Analytics App"
-      >
-        <div className="flex gap-4 overflow-x-auto py-2 w-full scrollbar-thick">
-          <img
-            className="flex-shrink-0 h-[300px] rounded-md shadow"
-            src="/personalanalytics1.png"
-            alt="Step 1"
-          />
-          <img
-            className="flex-shrink-0 h-[300px] rounded-md shadow"
-            src="/personalanalytics2.png"
-            alt="Step 2"
-          />
-          <img
-            className="flex-shrink-0 h-[300px] rounded-md shadow"
-            src="/personalanalytics3.png"
-            alt="Step 3"
-          />
-          <img
-            className="flex-shrink-0 h-[300px] rounded-md shadow"
-            src="/personalanalytics4.png"
-            alt="Step 4"
-          />
-        </div>
+        appName="the Personal Analytics app"
+        shutdownSteps={
+          <>
+            <DialogDescription>
+              Personal Analytics has no window to close, so it has to be closed
+              from Task Manager. Open Task Manager by pressing{" "}
+              <strong className="text-yellow-500">Ctrl + Shift + Esc</strong>,
+              or by searching{" "}
+              <strong className="text-yellow-500">task</strong> in the Windows
+              search bar.
+            </DialogDescription>
+            <img
+              className="w-full rounded-md border border-border shadow"
+              src="/pa-1-open-task-manager.png"
+              alt="Windows search results for task, with Open highlighted"
+            />
+            <DialogDescription>
+              In the search box at the top of Task Manager, type{" "}
+              <strong className="text-yellow-500">personal</strong> to find the
+              app.
+            </DialogDescription>
+            <img
+              className="w-full rounded-md border border-border shadow"
+              src="/pa-2-find-process.png"
+              alt="Task Manager filtered to the PersonalAnalytics process"
+            />
+            <DialogDescription>
+              Right-click{" "}
+              <strong className="text-yellow-500">PersonalAnalytics</strong> and
+              choose <strong className="text-yellow-500">End task</strong>.
+            </DialogDescription>
+            <img
+              className="w-full rounded-md border border-border shadow"
+              src="/pa-3-end-task.png"
+              alt="Task Manager right-click menu with End task highlighted"
+            />
+          </>
+        }
+      />
 
-
-        <DialogDescription>
-          If the Personal Analytics app is currently running, please close it completely.
-          <span className="text-yellow-500"> Please use the scrollbar above to view the instructions
-            for closing the PersonalAnalytics app. </span>
-          Then, restart the app using the provided executable file (.exe).
-          Wait a few seconds and click "Click to Verify Again" to check the status.
-        </DialogDescription>
-        <DialogDescription>
-          If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
-        </DialogDescription>
-      </FixDialog>
-
-      <FixDialog
+      <AppFixDialog
         isOpen={showFeedbackSystemFix}
         onClose={() => setShowFeedbackSystemFix(false)}
-        title="Fix Stoplight Feedback System"
-      >
-        <div className="flex justify-center p-3">
-          <img
-            width={"60%"}
-            src="/closestoplight.png"
-            alt="closestoplight"
-          />
-        </div>
-        <DialogDescription>
-          The stoplight app should be centered at the top of each display used by the computer.
-          If it appears to be open, please close it completely (as indicated by the image). Then,
-          re-open the Stoplight executable (.exe) file once more.
-          Wait a few seconds and click "Click to Verify Again" to check the status.
-        </DialogDescription>
-        <DialogDescription>
-          If the issue persists, contact Matheus at <strong className="text-yellow-500">mcost16@lsu.edu</strong> for assistance.
-        </DialogDescription>
-      </FixDialog>
+        appName="the Stoplight Feedback System"
+        shutdownSteps={
+          <>
+            <DialogDescription>
+              The Stoplight app is closed from the system tray, at the
+              bottom-right of the screen next to the clock. You may need to
+              click the{" "}
+              <strong className="text-yellow-500">^</strong> arrow to see hidden
+              icons. Right-click the stoplight icon, then choose{" "}
+              <strong className="text-yellow-500">Exit</strong>.
+            </DialogDescription>
+            <img
+              className="w-full rounded-md border border-border shadow"
+              src="/stoplight-exit-tray.png"
+              alt="System tray menu for the stoplight app with Exit highlighted"
+            />
+          </>
+        }
+      />
     </>
   );
 }
