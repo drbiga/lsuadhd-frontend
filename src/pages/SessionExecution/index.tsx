@@ -92,6 +92,26 @@ export default function NextSession() {
                 session={nextSession}
                 sessionProgressData={sessionProgressData}
               />
+              
+              {sessionProgressData.stage === Stage.READCOMP && nextSession?.readcomp_link && (
+                <div>
+                  <button className="bg-gradient-to-r from-slate-700/80 to-slate-600/80 py-2 px-4 rounded-sm">
+                    <a href={nextSession.readcomp_link} target="_blank">
+                      Open reading-comprehension in separate tab
+                    </a>
+                  </button>
+                </div>
+              )}
+              
+              {sessionProgressData.stage === Stage.SURVEY && nextSession?.post_link && (
+                <div>
+                  <button className="bg-gradient-to-r from-slate-700/80 to-slate-600/80 py-2 px-4 rounded-sm">
+                    <a href={nextSession.post_link} target="_blank">
+                      Open post-survey in separate tab
+                    </a>
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         )}
